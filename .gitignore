@@ -1,2 +1,9 @@
 .idea/
+**logs
 *.log
+.ipynb_checkpoints
+
+*/results_dir/
+
+# Python
+__pycache__/
