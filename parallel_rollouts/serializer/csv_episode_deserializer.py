@@ -1,14 +1,15 @@
 import csv
 from typing import List
 
+from commons import Episode
 from commons.experience_tuple import ExperienceTuple
 
 
 class CSVEpisodeDeserializer:
 
-    def deserialize_episode(self, fname: str) -> List[ExperienceTuple]:
-        episode: List[ExperienceTuple] = []
-        with open(fname, "r") as file:
+    def deserialize_episode(self, episode_fname: str) -> Episode:
+        experience_tuples: List[ExperienceTuple] = []
+        with open(episode_fname, "r") as file:
             reader = csv.reader(file)
             for line in reader:
                 experience_tuple = ExperienceTuple(
@@ -16,8 +17,8 @@ class CSVEpisodeDeserializer:
                     action=self._deserialize_line(line[1]),
                     final_state=self._deserialize_line(line[2]),
                 )
-                episode.append(experience_tuple)
-        return episode
+                experience_tuples.append(experience_tuple)
+        return Episode(experience_tuples=experience_tuples)
 
     @staticmethod
     def _deserialize_line(line: str):
