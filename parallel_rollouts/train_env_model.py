@@ -17,7 +17,7 @@ batch_size=16
 net = Net(hidden_size)
 net.train()
 if use_cuda:
-    net.cuda()
+    net = net.cuda()
 
 # check if there is some already present state, if so, load it
 if os.path.isfile(file_path):
@@ -49,8 +49,8 @@ for epoch in range(num_epochs):
         input = sample_batched["in"]
         target = sample_batched["target"]
         if use_cuda:
-            input.cuda()
-            target.cuda()
+            input = input.cuda()
+            target = target.cuda()
         if not input.shape[1] == 177:
             print("skipped wrong shape at: {}".format(i_batch))
             continue
@@ -69,6 +69,9 @@ for epoch in range(num_epochs):
 
         # print statistics
         running_loss += loss.item()
+        if i_batch == 0:
++            print('[%d, %5d] loss: %.3f' %
++                    (epoch + 1, i_batch + 1, running_loss))
         if i_batch % 2000 == 1999:    # print every 2000 mini-batches
             print('[%d, %5d] loss: %.3f' %
                     (epoch + 1, i_batch + 1, running_loss / 2000))
