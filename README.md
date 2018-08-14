@@ -15,10 +15,7 @@ The output is dictionary _dataset_. The data is stored as list of numpy arrays [
 ### How to setup environment?
 sh setup_conda.sh
 source activate opensim-rl
-Would like to test baselines? (Need MPI support)
-
-sudo apt-get install openmpi-bin openmpi-doc libopenmpi-dev 3+. sh setup_env_mpi.sh
-OR like DDPG agents? 3. sh setup_env.sh
+sh setup_env.sh
 
 Congrats! Now you are ready to check our agents.
 
