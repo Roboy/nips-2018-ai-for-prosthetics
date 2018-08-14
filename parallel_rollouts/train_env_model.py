@@ -11,7 +11,8 @@ from env_net import Net
 num_epochs = 1
 file_path = "env_model.pth"
 use_cuda = False
-hidden_size = 128
+hidden_size=128
+batch_size=16
 
 net = Net(hidden_size)
 net.train()
@@ -26,7 +27,7 @@ criterion = nn.MSELoss()
 optimizer = optim.SGD(net.parameters(), lr=0.0001)
 
 # load the data
-dataset = EnvModelDataset("results_collected", 200)
+dataset = EnvModelDataset("results_collected", 2400)
 
 # print some training samples
 rnd = np.random.randint(len(dataset), size=2)
@@ -36,7 +37,7 @@ for r in rnd:
     print("input: {}".format(input))
     # print("target: {}".format(s_prime))
 
-dataloader = DataLoader(dataset, batch_size=4,
+dataloader = DataLoader(dataset, batch_size=batch_size,
                         shuffle=True, num_workers=1)
 
 for epoch in range(num_epochs):
@@ -52,6 +53,9 @@ for epoch in range(num_epochs):
             target.cuda()
         if not input.shape[1] == 177:
             print("skipped wrong shape at: {}".format(i_batch))
+            continue
+        if not input.shape[0] == batch_size:
+            print("bad batch size: {}... skipping".format(input.shape[0]))
             continue
         
         # in your training loop:
