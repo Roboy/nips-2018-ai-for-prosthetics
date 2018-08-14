@@ -12,7 +12,7 @@ The output is dictionary _dataset_. The data is stored as list of numpy arrays [
 
 ## For using the DDPG, checkout to the ddpg branch.
 
-# How to setup environment?
+### How to setup environment?
 sh setup_conda.sh
 source activate opensim-rl
 Would like to test baselines? (Need MPI support)
@@ -22,7 +22,7 @@ OR like DDPG agents? 3. sh setup_env.sh
 
 Congrats! Now you are ready to check our agents.
 
-# Run DDPG agent
+### Run DDPG agent
 CUDA_VISIBLE_DEVICES="" PYTHONPATH=. python ddpg/train.py \
     --logdir ./logs_ddpg \
     --num-threads 4 \
@@ -38,7 +38,7 @@ CUDA_VISIBLE_DEVICES="" PYTHONPATH=. python ddpg/train.py \
     --initial-epsilon 0.5 --final-epsilon 0.001 \
     --tau 0.0001
 
-# Evaluate DDPG agent
+### Evaluate DDPG agent
 CUDA_VISIBLE_DEVICES="" PYTHONPATH=./ python ddpg/submit.py \
     --restore-actor-from ./logs_ddpg/actor_state_dict.pkl \
     --restore-critic-from ./logs_ddpg/critic_state_dict.pkl \
