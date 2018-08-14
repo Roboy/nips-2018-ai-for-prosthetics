@@ -3,7 +3,8 @@
 *.log
 .ipynb_checkpoints
 
-*/results_dir/
+**/results_dir/
 
 # Python
 __pycache__/
+.pytest_cache/

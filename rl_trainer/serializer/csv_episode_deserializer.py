@@ -1,8 +1,8 @@
 import csv
 from typing import List
 
-from commons import Episode
-from commons.experience_tuple import ExperienceTuple
+from rl_trainer.commons import Episode
+from rl_trainer.commons.experience_tuple import ExperienceTuple
 
 
 class CSVEpisodeDeserializer:
@@ -16,6 +16,7 @@ class CSVEpisodeDeserializer:
                     initial_state=self._deserialize_line(line[0]),
                     action=self._deserialize_line(line[1]),
                     final_state=self._deserialize_line(line[2]),
+                    reward=self._deserialize_line(line[3])[0],
                 )
                 experience_tuples.append(experience_tuple)
         return Episode(experience_tuples=experience_tuples)

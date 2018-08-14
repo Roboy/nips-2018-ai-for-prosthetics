@@ -1,6 +1,6 @@
 from typing import NamedTuple, Sequence
 
-from commons import ExperienceTuple
+from rl_trainer.commons import ExperienceTuple
 
 
 class Episode(NamedTuple):
