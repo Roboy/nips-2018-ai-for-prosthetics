@@ -11,7 +11,7 @@ class ProstheticsEnvAgent:
         action = self._act(observation)
         assert isinstance(action, list)
         assert len(action) == self.DIM_ACTION
-        return self._act(observation)
+        return action
 
     def _act(self, observation: Sequence[float]) -> List[float]:
         raise NotImplementedError
