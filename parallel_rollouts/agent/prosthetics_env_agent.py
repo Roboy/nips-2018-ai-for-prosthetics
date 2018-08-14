@@ -1,6 +1,6 @@
 from typing import Sequence, List
 
-from commons import ExperienceTuple
+from commons import ExperienceTuple, Episode
 
 
 class ProstheticsEnvAgent:
@@ -14,4 +14,12 @@ class ProstheticsEnvAgent:
         return self._act(state)
 
     def _act(self, state: Sequence[float]) -> List[float]:
+        raise NotImplementedError
+
+    def train(self, episodes: Sequence[Episode]):
+        for e in episodes:
+            assert isinstance(e, Episode)
+        self._train(episodes)
+
+    def _train(self, episodes: Sequence[Episode]):
         raise NotImplementedError

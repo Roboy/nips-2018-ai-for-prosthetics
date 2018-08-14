@@ -1,1 +1,1 @@
-from .rollout import RollOut
+from .rollout import RollOutConfiguration, RollOut
