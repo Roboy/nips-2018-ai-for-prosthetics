@@ -1,1 +1,2 @@
 from .parallelizer import Parallelizer, MockParallelizer
+from .multiprocessing_parallelizer import MultiProcessingParallelizer
