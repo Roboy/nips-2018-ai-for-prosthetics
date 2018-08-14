@@ -10,10 +10,17 @@ class Parallelizer:
 
     def launch_in_parallel(self, configuration: RollOutConfiguration) -> \
             List[Episode]:
+        assert isinstance(configuration, RollOutConfiguration)
+        episodes = self._launch_in_parallel(configuration)
+        for e in episodes:
+            assert isinstance(e, Episode)
+        return episodes
+
+    def _launch_in_parallel(self, configuration: RollOutConfiguration):
         raise NotImplementedError
 
 
 class MockParallelizer(Parallelizer):
-    def launch_in_parallel(self, configuration: RollOutConfiguration) -> \
+    def _launch_in_parallel(self, configuration: RollOutConfiguration) -> \
             List[Episode]:
         return RollOut(configuration).run()
