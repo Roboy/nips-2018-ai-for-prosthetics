@@ -6,34 +6,17 @@ import numpy as np
 import os.path
 from env_model_dataset import EnvModelDataset
 from torch.utils.data import DataLoader
+from env_net import Net
 
-num_epochs = 5
+num_epochs = 1
 file_path = "env_model.pth"
+use_cuda = False
+hidden_size = 128
 
-class Net(nn.Module):
-    def __init__(self, hidden_layer_size):
-        super(Net, self).__init__()
-        self.fc1 = nn.Linear(158+19, 128)
-        self.bn1 = nn.BatchNorm1d(128)
-        self.fc2 = nn.Linear(128, hidden_layer_size)
-        self.bn2 = nn.BatchNorm1d(hidden_layer_size)
-        self.fc3 = nn.Linear(hidden_layer_size, 158)
-
-    def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = self.bn2(F.relu(self.bn1(self.fc2(x))))
-        x = self.fc3(x)
-        return x
-
-    def num_flat_features(self, x):
-        size = x.size()[1:]  # all dimensions except the batch dimension
-        num_features = 1
-        for s in size:
-            num_features *= s
-        return num_features
-
-net = Net(128)
+net = Net(hidden_size)
 net.train()
+if use_cuda:
+    net.cuda()
 
 # check if there is some already present state, if so, load it
 if os.path.isfile(file_path):
@@ -43,7 +26,7 @@ criterion = nn.MSELoss()
 optimizer = optim.SGD(net.parameters(), lr=0.0001)
 
 # load the data
-dataset = EnvModelDataset("results_collected", 2400)
+dataset = EnvModelDataset("results_collected", 200)
 
 # print some training samples
 rnd = np.random.randint(len(dataset), size=2)
@@ -54,16 +37,19 @@ for r in rnd:
     # print("target: {}".format(s_prime))
 
 dataloader = DataLoader(dataset, batch_size=4,
-                        shuffle=False, num_workers=1)
+                        shuffle=True, num_workers=1)
 
 for epoch in range(num_epochs):
     print("Start of epoch {} of {}".format(epoch, num_epochs))
     running_loss = 0.0
     for i_batch, sample_batched in enumerate(dataloader):
         # get the inputs
+        
         input = sample_batched["in"]
         target = sample_batched["target"]
-
+        if use_cuda:
+            input.cuda()
+            target.cuda()
         if not input.shape[1] == 177:
             print("skipped wrong shape at: {}".format(i_batch))
             continue
