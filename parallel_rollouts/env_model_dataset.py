@@ -13,7 +13,8 @@ class EnvModelDataset(Dataset):
         loader = CSVEpisodeDeserializer()
         for name in episode_names:
             print("load episode: {}".format(name))
-            self.data.extend(loader.deserialize_episode(name))
+            episode = loader.deserialize_episode(name)
+            self.data.extend(episode.experience_tuples)
 
     def __len__(self):
         return len(self.data)
