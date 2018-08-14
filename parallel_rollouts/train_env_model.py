@@ -70,8 +70,8 @@ for epoch in range(num_epochs):
         # print statistics
         running_loss += loss.item()
         if i_batch == 0:
-+            print('[%d, %5d] loss: %.3f' %
-+                    (epoch + 1, i_batch + 1, running_loss))
+            print('[%d, %5d] loss: %.3f' %
+                    (epoch + 1, i_batch + 1, running_loss))
         if i_batch % 2000 == 1999:    # print every 2000 mini-batches
             print('[%d, %5d] loss: %.3f' %
                     (epoch + 1, i_batch + 1, running_loss / 2000))
