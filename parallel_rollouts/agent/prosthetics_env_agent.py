@@ -1,17 +1,17 @@
 from typing import Sequence, List
 
+from commons import ExperienceTuple
+
 
 class ProstheticsEnvAgent:
-    DIM_OBSERVATION = 158
-    DIM_ACTION = 19
 
-    def act(self, observation: Sequence[float]) -> List[float]:
-        assert isinstance(observation, list)
-        assert len(observation) == self.DIM_OBSERVATION
-        action = self._act(observation)
+    def act(self, state: Sequence[float]) -> List[float]:
+        assert isinstance(state, list)
+        assert len(state) == ExperienceTuple.DIM_STATE
+        action = self._act(state)
         assert isinstance(action, list)
-        assert len(action) == self.DIM_ACTION
-        return action
+        assert len(action) == ExperienceTuple.DIM_ACTION
+        return self._act(state)
 
-    def _act(self, observation: Sequence[float]) -> List[float]:
+    def _act(self, state: Sequence[float]) -> List[float]:
         raise NotImplementedError
