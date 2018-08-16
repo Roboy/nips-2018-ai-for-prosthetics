@@ -12,13 +12,14 @@ if __name__ == '__main__':
     learning_iterations = 2
     episodes_per_interaction = 2
     results_dir = "results_dir"
+    env_constructor = ProstheticsEnv
 
     assert not os.path.isdir(results_dir), "Folder '{}' already exists".format(results_dir)
 
-    env = ProstheticsEnv(visualize=False)
+    env = env_constructor()
     agent = RandomAgent(action_space=env.action_space, state_space=env.observation_space)
     trainer = ParallelTrainer(
-        env_constructor=lambda: ProstheticsEnv(visualize=False),
+        env_constructor=lambda: env_constructor(),
         initial_agent=agent,
         episodes_per_interaction=episodes_per_interaction,
         num_processes=num_parallel_processes,

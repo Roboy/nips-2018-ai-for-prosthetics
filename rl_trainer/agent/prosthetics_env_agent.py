@@ -12,7 +12,8 @@ class GymAgent:
         self._action_space = action_space
 
     def act(self, state: Sequence[float]) -> List[float]:
-        assert isinstance(state, list)
+        for e in state:
+            assert isinstance(e, float)
         assert len(state) == self._state_space.shape[0]
         action = self._act(state)
         assert isinstance(action, list)
