@@ -1,7 +1,7 @@
 import csv
 from typing import Sequence, List
 
-from commons import Episode
+from rl_trainer.commons import Episode
 
 
 class CSVEpisodeSerializer:
@@ -14,6 +14,7 @@ class CSVEpisodeSerializer:
                     self._format_line(exp_tuple.initial_state),
                     self._format_line(exp_tuple.action),
                     self._format_line(exp_tuple.final_state),
+                    self._format_line([exp_tuple.reward]),
                 ]
                 writer.writerow(line)
 
