@@ -5,6 +5,7 @@ import os
 import torch
 
 EPSILON = 0.00000001
+MIN_MAX_NORM = True
 
 class EnvModelDataset(Dataset):
     def __init__(self, base_folder, num_episodes):
@@ -40,20 +41,36 @@ class EnvModelDataset(Dataset):
         self.np_targets = np.array(np_targets, dtype=np.float32)
         self.np_actions = np.array(np_actions, dtype=np.float32)
 
-        self.state_means = self.np_states.mean(axis=0)
-        self.state_stds = self.np_states.var(axis=0) + EPSILON
+        if MIN_MAX_NORM:
+            self.state_mins = self.np_states.min(axis=0)
+            self.state_maxs = self.np_states.max(axis=0)
 
-        self.targets_means = self.np_targets.mean(axis=0)
-        self.targets_stds = self.np_targets.var(axis=0) + EPSILON
+            self.target_mins = self.np_targets.min(axis=0)
+            self.target_maxs = self.np_targets.max(axis=0)
 
-        self.np_states = self.np_states - self.state_means
-        self.np_targets = self.np_targets - self.targets_means
+            self.np_states = self.np_states - self.state_mins
+            self.np_targets = self.np_targets - self.target_mins
 
-        self.np_states = self.np_states / self.state_stds
-        self.np_targets = self.np_targets / self.targets_stds
+            self.np_states = self.np_states / (self.state_maxs - self.state_mins + EPSILON)
+            self.np_targets = self.np_targets / (self.target_maxs - self.target_mins + EPSILON)
 
-        print("state means: {}".format(self.state_means))
-        print("state stds: {}".format(self.targets_stds))
+            print("state max: {}".format(self.state_maxs))
+            print("state min: {}".format(self.state_mins))
+        else:
+            self.state_means = self.np_states.mean(axis=0)
+            self.state_stds = self.np_states.var(axis=0) + EPSILON
+
+            self.targets_means = self.np_targets.mean(axis=0)
+            self.targets_stds = self.np_targets.var(axis=0) + EPSILON
+
+            self.np_states = self.np_states - self.state_means
+            self.np_targets = self.np_targets - self.targets_means
+
+            self.np_states = self.np_states / self.state_stds
+            self.np_targets = self.np_targets / self.targets_stds
+
+            print("state means: {}".format(self.state_means))
+            print("state stds: {}".format(self.targets_stds))
 
         print("np_states shape: {}".format(self.np_states.shape))
 
