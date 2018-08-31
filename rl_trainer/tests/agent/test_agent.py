@@ -1,10 +1,11 @@
-from rl_trainer.agent.prosthetics_env_agent import MockSpace
+from rl_trainer.agent.gym_agent import MockSpace
 from rl_trainer.agent import RandomAgent
 from rl_trainer.agent import GymAgent
 from rl_trainer.agent import OneMuscleAgent
 
 ACTION_SPACE = MockSpace(size=3)
 STATE_SPACE = MockSpace(size=4)
+
 
 def test_agents_construction():
     constructors = [

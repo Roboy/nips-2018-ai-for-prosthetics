@@ -1,7 +1,7 @@
 import os
 
 from rl_trainer.commons.experience_tuple import ExperienceTupleFactory
-from rl_trainer.agent.prosthetics_env_agent import MockSpace
+from rl_trainer.agent.gym_agent import MockSpace
 from rl_trainer.commons import Episode
 from rl_trainer.serializer import CSVEpisodeDeserializer
 from rl_trainer.serializer import CSVEpisodeSerializer

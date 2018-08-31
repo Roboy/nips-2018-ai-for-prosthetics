@@ -1,4 +1,5 @@
-from typing import Sequence, List
+import numpy as np
+from typing import Sequence
 
 import gym
 
@@ -11,16 +12,16 @@ class GymAgent:
         self._state_space = state_space
         self._action_space = action_space
 
-    def act(self, state: Sequence[float]) -> List[float]:
-        for e in state:
-            assert isinstance(e, float)
-        assert len(state) == self._state_space.shape[0]
+    def act(self, state):
+        if not isinstance(state, np.ndarray):
+            state = np.array(state)
         action = self._act(state)
-        assert isinstance(action, list)
-        assert len(action) == self._action_space.shape[0]
+        if not isinstance(action, np.ndarray):
+            action = np.array(action)
+        assert self._action_space.contains(action)
         return action
 
-    def _act(self, state: Sequence[float]) -> List[float]:
+    def _act(self, state):
         raise NotImplementedError
 
     def train(self, episodes: Sequence[Episode]):
@@ -38,3 +39,6 @@ class MockSpace:
 
     def sample(self):
         return [0.5] * self.shape[0]
+
+    def contains(self, x):
+        return True

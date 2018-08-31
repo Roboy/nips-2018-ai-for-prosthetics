@@ -6,7 +6,7 @@ from rl_trainer.commons import Episode
 
 class RandomAgent(GymAgent):
     def _act(self, state: Sequence[float]) -> List[float]:
-        return list(self._action_space.sample())
+        return self._action_space.sample()
 
     def _train(self, episodes: Sequence[Episode]):
         pass
