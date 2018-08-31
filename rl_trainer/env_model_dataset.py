@@ -5,7 +5,8 @@ import os
 import torch
 
 EPSILON = 0.00000001
-MIN_MAX_NORM = True
+# if True use x = (x - min)/(max - min), else use mean and std normalization (whitening) x = (x - mean)/stdd
+MIN_MAX_NORM = True 
 
 class EnvModelDataset(Dataset):
     def __init__(self, base_folder, num_episodes):
