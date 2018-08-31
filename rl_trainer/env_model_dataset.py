@@ -1,5 +1,5 @@
 from torch.utils.data import Dataset, DataLoader
-from serializer import CSVEpisodeDeserializer
+from serializer import CSVEpisodeParser
 import numpy as np
 import os
 import torch
@@ -14,13 +14,13 @@ class EnvModelDataset(Dataset):
         episode_names=map(lambda x: os.path.join(folder_name, "episode{:05d}.csv".format(x)), np.arange(num_episodes))
 
         data = []
-        loader = CSVEpisodeDeserializer()
+        loader = CSVEpisodeParser()
         np_states = []
         np_targets = []
         np_actions = []
         for name in episode_names:
             print("load episode: {}".format(name))
-            episode = loader.deserialize_episode(name)
+            episode = loader.parse_episode(name)
             data.extend(episode.experience_tuples)
         for element in data:
             state = element.initial_state

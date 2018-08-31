@@ -1,2 +1,2 @@
-from .csv_episode_deserializer import CSVEpisodeDeserializer
+from .csv_episode_parser import CSVEpisodeParser
 from .csv_episode_serializer import CSVEpisodeSerializer
