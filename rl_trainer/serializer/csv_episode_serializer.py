@@ -13,7 +13,7 @@ class CSVEpisodeSerializer:
                 line = [
                     self._format_line(exp_tuple.initial_state),
                     self._format_line(exp_tuple.action),
-                    f"{float(exp_tuple.reward):.4}",
+                    f"{float(exp_tuple.reward):.6}",
                     self._format_line(exp_tuple.final_state),
                     str(exp_tuple.final_state_is_terminal),
                 ]
@@ -21,4 +21,4 @@ class CSVEpisodeSerializer:
 
     @staticmethod
     def _format_line(line: Sequence[float]) -> List[str]:
-        return [f"{float(e):.4}" for e in line]
+        return [f"{float(e):.6}" for e in line]

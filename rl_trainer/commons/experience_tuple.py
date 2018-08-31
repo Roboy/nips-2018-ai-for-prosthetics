@@ -1,6 +1,5 @@
+import numpy as np
 from typing import Sequence, NamedTuple
-
-import gym
 
 
 class ExperienceTuple(NamedTuple):
@@ -10,41 +9,21 @@ class ExperienceTuple(NamedTuple):
     final_state: Sequence[float]
     final_state_is_terminal: bool
 
+    def __eq__(self, other) -> bool:
+        return all([
+            np.isclose(self.initial_state, other.initial_state).all(),
+            np.isclose(self.action, other.action).all(),
+            np.isclose(self.reward, other.reward).all(),
+            np.isclose(self.final_state, other.final_state).all(),
+            self.final_state_is_terminal == other.final_state_is_terminal,
+        ])
 
-class ExperienceTupleFactory:
-    _DEFAULT_RANDOM_REWARD = 0.0
 
-    def __init__(self, state_space: gym.Space, action_space: gym.Space):
-        self._state_space = state_space
-        self._action_space = action_space
-
-    def new_tuple(
-            self,
-            initial_state: Sequence[float],
-            action: Sequence[float],
-            reward: float,
-            final_state: Sequence[float],
-            final_state_is_final: bool,
-    ) -> ExperienceTuple:
-        assert len(initial_state) == self._state_space.shape[0]
-        assert len(action) == self._action_space.shape[0]
-        assert len(final_state) == self._state_space.shape[0]
-        assert isinstance(reward, float)
-        assert isinstance(final_state_is_final, bool)
-
-        return ExperienceTuple(
-            initial_state=initial_state,
-            action=action,
-            reward=reward,
-            final_state=final_state,
-            final_state_is_terminal=final_state_is_final
-        )
-
-    def random_tuple(self) -> ExperienceTuple:
-        return ExperienceTuple(
-            initial_state=self._state_space.sample(),
-            action=self._action_space.sample(),
-            final_state=self._state_space.sample(),
-            reward=self._DEFAULT_RANDOM_REWARD,
-            final_state_is_terminal=False,
-        )
+def mock_experience_tuple(action_dim: int, state_dim: int) -> ExperienceTuple:
+    return ExperienceTuple(
+        initial_state=np.random.random(state_dim),
+        action=np.random.random(action_dim),
+        reward=np.random.random(),
+        final_state=np.random.random(state_dim),
+        final_state_is_terminal=False,
+    )

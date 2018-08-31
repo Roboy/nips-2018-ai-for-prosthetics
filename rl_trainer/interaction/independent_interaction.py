@@ -33,7 +33,7 @@ class IndependentInteraction:
                 action=action,
                 reward=reward,
                 final_state=final_state,
-                final_state_is_terminal=done
+                final_state_is_terminal=done,
             )
             experience_tuples.append(experience_tuple)
             initial_state = final_state

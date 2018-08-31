@@ -9,7 +9,7 @@ from rl_trainer.serializer import CSVEpisodeSerializer
 
 if __name__ == '__main__':
     num_parallel_processes = 2
-    learning_iterations = 2
+    parallel_training_iterations = 2
     episodes_per_interaction = 2
     results_dir = "results_dir"
     env_constructor = lambda: ProstheticsEnv(visualize=False)
@@ -25,8 +25,9 @@ if __name__ == '__main__':
         num_processes=num_parallel_processes,
     )
 
-    for _ in range(learning_iterations):
+    for _ in range(parallel_training_iterations):
         trainer.training_step()
+        print(f"Training step of {trainer} complete")
     print(f"All learning iterations of {trainer} complete")
 
     os.makedirs(results_dir)
