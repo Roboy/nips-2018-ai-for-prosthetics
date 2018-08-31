@@ -28,7 +28,13 @@ class IndependentInteraction:
         while not done:
             action = self._agent.act(initial_state)
             final_state, reward, done, info = self._env.step(action)
-            experience_tuple = ExperienceTuple(initial_state, action, final_state, reward)
+            experience_tuple = ExperienceTuple(
+                initial_state=initial_state,
+                action=action,
+                reward=reward,
+                final_state=final_state,
+                final_state_is_terminal=done
+            )
             experience_tuples.append(experience_tuple)
             initial_state = final_state
         return Episode(experience_tuples=experience_tuples)

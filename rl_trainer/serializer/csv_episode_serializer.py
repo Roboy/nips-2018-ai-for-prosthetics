@@ -13,8 +13,9 @@ class CSVEpisodeSerializer:
                 line = [
                     self._format_line(exp_tuple.initial_state),
                     self._format_line(exp_tuple.action),
+                    f"{float(exp_tuple.reward):.4}",
                     self._format_line(exp_tuple.final_state),
-                    self._format_line([exp_tuple.reward]),
+                    str(exp_tuple.final_state_is_terminal),
                 ]
                 writer.writerow(line)
 
