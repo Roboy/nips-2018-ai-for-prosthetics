@@ -1,0 +1,15 @@
+ syntax = "proto3";
+
+ package rl_trainer;
+
+ message ExperienceTuple {
+     repeated double initial_state = 1;
+     repeated double action = 2;
+     double reward = 3;
+     repeated double final_state = 4;
+     bool final_state_is_terminal = 5;
+ }
+
+ message Episode {
+     repeated ExperienceTuple experience_tuples = 1;
+ }

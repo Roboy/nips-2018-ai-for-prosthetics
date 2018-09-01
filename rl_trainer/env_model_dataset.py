@@ -1,5 +1,5 @@
 from torch.utils.data import Dataset, DataLoader
-from serializer import CSVEpisodeParser
+from episode_serializer import CSVEpisodeParser
 import numpy as np
 import os
 import torch

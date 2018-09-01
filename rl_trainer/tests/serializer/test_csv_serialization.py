@@ -3,8 +3,7 @@ import os
 from rl_trainer.commons.experience_tuple import mock_experience_tuple, \
     ExperienceTuple
 from rl_trainer.commons import Episode
-from rl_trainer.serializer import CSVEpisodeParser
-from rl_trainer.serializer import CSVEpisodeSerializer
+from rl_trainer.episode_serializer import CSVEpisodeParser, CSVEpisodeSerializer
 
 EXPERIENCE_TUPLE = mock_experience_tuple(action_dim=3, state_dim=2)
 

@@ -5,7 +5,7 @@ from osim.env import ProstheticsEnv
 from rl_trainer.agent import RandomAgent
 from rl_trainer.parallel_trainer import ParallelTrainer
 
-from rl_trainer.serializer import CSVEpisodeSerializer
+from rl_trainer.episode_serializer import CSVEpisodeSerializer
 
 if __name__ == '__main__':
     num_parallel_processes = 2
