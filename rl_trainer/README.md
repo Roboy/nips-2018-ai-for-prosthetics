@@ -2,7 +2,7 @@
 ## Installation
 Setup the Python environment according to: https://github.com/stanfordnmbl/osim-rl
 ## Running
-Use the ``orchestrator.py`` script to interaction and learn with your agent in parallel.
+Use the ``orchestrator.py`` script to experiment and learn with your agent in parallel.
 ```bash
 python -m rl_trainer.orchestrator
 ```

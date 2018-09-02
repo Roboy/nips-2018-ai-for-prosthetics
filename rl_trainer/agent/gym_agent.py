@@ -31,14 +31,3 @@ class GymAgent:
 
     def _train(self, episodes: Sequence[Episode]):
         raise NotImplementedError
-
-
-class MockSpace:
-    def __init__(self, size: int):
-        self.shape = (size,)
-
-    def sample(self):
-        return [0.5] * self.shape[0]
-
-    def contains(self, x):
-        return True

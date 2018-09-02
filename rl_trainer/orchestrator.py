@@ -10,7 +10,7 @@ from rl_trainer.episode_serializer import CSVEpisodeSerializer
 if __name__ == '__main__':
     num_parallel_processes = 2
     parallel_training_iterations = 2
-    episodes_per_interaction = 2
+    episodes_per_experiment = 2
     results_dir = "results_dir"
     env_constructor = lambda: ProstheticsEnv(visualize=False)
 
@@ -21,7 +21,7 @@ if __name__ == '__main__':
     trainer = ParallelTrainer(
         env_constructor=env_constructor,
         initial_agent=agent,
-        episodes_per_interaction=episodes_per_interaction,
+        episodes_per_experiment=episodes_per_experiment,
         num_processes=num_parallel_processes,
     )
 

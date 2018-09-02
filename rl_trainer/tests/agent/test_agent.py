@@ -1,4 +1,4 @@
-from rl_trainer.agent.gym_agent import MockSpace
+from rl_trainer.commons import MockSpace
 from rl_trainer.agent import RandomAgent
 from rl_trainer.agent import GymAgent
 from rl_trainer.agent import OneMuscleAgent
