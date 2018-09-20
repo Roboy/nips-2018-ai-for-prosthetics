@@ -12,8 +12,8 @@ from rl_trainer.ddpg_impl.flower.replay_buffer import ReplayBuffer
 
 class Train:
     def __init__(self, sess: tf.Session, env: gym.Env, actor: Actor,
-                 critic: Critic, actor_noise: Callable, replay_buffer: ReplayBuffer, args):
-        self._args = args
+                 critic: Critic, actor_noise: Callable, replay_buffer: ReplayBuffer, tf_summary_dir: str):
+        self._tf_summary_dir = tf_summary_dir
         self._actor_noise = actor_noise
         self._critic = critic
         self._actor = actor
@@ -23,10 +23,10 @@ class Train:
         self._episode_reward = 0
         self._episode_max_q = 0
 
-    def train(self):
+    def train(self, num_episodes: int, max_episode_len: int, batch_size: int, render_env: bool):
         self.build_summaries()
         self._sess.run(tf.global_variables_initializer())
-        self.writer = tf.summary.FileWriter(self._args['summary_dir'], self._sess.graph)
+        self.writer = tf.summary.FileWriter(self._tf_summary_dir, self._sess.graph)
 
         # Initialize target network weights
         self._actor.update_target_network()
@@ -37,16 +37,16 @@ class Train:
         # in other environments.
         # tflearn.is_training(True)
 
-        for episode_idx in range(int(self._args['max_episodes'])):
+        for episode_idx in range(num_episodes):
 
             self._episode_reward = 0
             self._episode_max_q = 0
 
             current_state = self._env.reset()
 
-            for step_idx in range(int(self._args['max_episode_len'])):
+            for step_idx in range(max_episode_len):
 
-                if self._args['render_env']:
+                if render_env:
                     self._env.render()
 
                 action = self._actor.predict(np.reshape(current_state, (1, self._actor.s_dim))) + self._actor_noise()
@@ -61,8 +61,8 @@ class Train:
                     np.reshape(new_state, (self._actor.s_dim,)),
                 )
 
-                if self._replay_buffer.size() > int(self._args['minibatch_size']):
-                    self._train_actor_critic()
+                if self._replay_buffer.size() > batch_size:
+                    self._train_with_replay_buffer(batch_size)
 
                 current_state = new_state
                 self._episode_reward += reward
@@ -84,16 +84,16 @@ class Train:
             (self._episode_max_q / float(step_idx))
         ))
 
-    def _train_actor_critic(self):
+    def _train_with_replay_buffer(self, batch_size: int):
         state_batch, action_batch, reward_batch, done_batch, final_state_batch = \
-            self._replay_buffer.sample_batch(int(self._args['minibatch_size']))
+            self._replay_buffer.sample_batch(batch_size)
 
         # Calculate targets
         target_q = self._critic.predict_target(
             final_state_batch, self._actor.predict_target(final_state_batch))
 
         y_i = []
-        for k in range(int(self._args['minibatch_size'])):
+        for k in range(batch_size):
             if done_batch[k]:
                 y_i.append(reward_batch[k])
             else:
@@ -101,7 +101,7 @@ class Train:
 
         # Update the critic given the targets
         predicted_q_value, _ = self._critic.train(
-            state_batch, action_batch, np.reshape(y_i, (int(self._args['minibatch_size']), 1)))
+            state_batch, action_batch, np.reshape(y_i, (batch_size, 1)))
 
         self._episode_max_q = np.amax(predicted_q_value)
         self._train_actor(state_batch)

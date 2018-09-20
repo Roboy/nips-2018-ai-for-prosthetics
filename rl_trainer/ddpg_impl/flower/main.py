@@ -45,8 +45,21 @@ def main(args):
         if args["use_gym_monitor"]:
             env = wrappers.Monitor(env, args['monitor_dir'], force=True)
 
-        Train(sess=sess, env=env, args=args, actor=actor, critic=critic,
-              actor_noise=actor_noise, replay_buffer=replay_buffer).train()
+        train = Train(
+            sess=sess,
+            env=env,
+            actor=actor,
+            critic=critic,
+            actor_noise=actor_noise,
+            replay_buffer=replay_buffer,
+            tf_summary_dir=args['summary_dir'],
+        )
+        train.train(
+            num_episodes=int(args['max_episodes']),
+            max_episode_len=int(args["max_episode_len"]),
+            render_env=args['render_env'],
+            batch_size=int(args['minibatch_size']),
+        )
 
         if args['use_gym_monitor']:
             env.monitor.close()
