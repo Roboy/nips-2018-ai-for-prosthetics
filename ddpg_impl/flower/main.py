@@ -7,7 +7,8 @@ from osim.env import ProstheticsEnv
 
 from flower.action_noise import OrnsteinUhlenbeckActionNoise
 from flower.args_parser import setup_args_parser
-from flower.ddpg import ActorNetwork, CriticNetwork, train
+from flower.ddpg import ActorNetwork, CriticNetwork
+from flower.train import train
 
 
 def main(args):
