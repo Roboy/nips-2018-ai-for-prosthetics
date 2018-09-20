@@ -1,6 +1,7 @@
 import shutil
 
-from flower.args_parser import setup_args_parser, RESULTS_DIR
+from flower.args_parser import RESULTS_DIR
+from flower.args_parser import setup_args_parser
 from flower.main import main
 
 
