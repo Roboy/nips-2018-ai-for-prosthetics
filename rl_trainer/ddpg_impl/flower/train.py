@@ -20,6 +20,8 @@ class Train:
         self._env = env
         self._replay_buffer = replay_buffer
         self._sess = sess
+        self._episode_cumulated_reward = 0
+        self._cumulated_max_q = 0
 
     def train(self):
         summary_ops, episode_reward, episode_ave_max_q = build_summaries()
@@ -40,9 +42,6 @@ class Train:
 
             current_state = self._env.reset()
 
-            episode_cumulated_reward = 0
-            cumulated_max_q = 0
-
             for step_idx in range(int(self._args['max_episode_len'])):
 
                 if self._args['render_env']:
@@ -62,57 +61,58 @@ class Train:
 
                 # Keep adding experience to the memory until
                 # there are at least minibatch size samples
-                batch_size = int(self._args['minibatch_size'])
 
-                if self._replay_buffer.size() > batch_size:
-                    state_batch, action_batch, reward_batch, done_batch, final_state_batch = \
-                        self._replay_buffer.sample_batch(batch_size)
-
-                    # Calculate targets
-                    target_q = self._critic.predict_target(
-                        final_state_batch, self._actor.predict_target(final_state_batch))
-
-                    y_i = []
-                    for k in range(batch_size):
-                        if done_batch[k]:
-                            y_i.append(reward_batch[k])
-                        else:
-                            y_i.append(reward_batch[k] + self._critic.gamma * target_q[k])
-
-                    # Update the critic given the targets
-                    predicted_q_value, _ = self._critic.train(
-                        state_batch, action_batch, np.reshape(y_i, (batch_size, 1)))
-
-                    cumulated_max_q += np.amax(predicted_q_value)
-
-                    self._train_actor(state_batch)
-
-                    # Update target networks
-                    self._actor.update_target_network()
-                    self._critic.update_target_network()
+                if self._replay_buffer.size() > int(self._args['minibatch_size']):
+                    self._train_actor_critic()
 
                 current_state = new_state
-                episode_cumulated_reward += reward
+                self._episode_cumulated_reward += reward
 
                 if done:
                     summary_str = self._sess.run(summary_ops, feed_dict={
-                        episode_reward: episode_cumulated_reward,
-                        episode_ave_max_q: cumulated_max_q / float(step_idx)
+                        episode_reward: self._episode_cumulated_reward,
+                        episode_ave_max_q: self._cumulated_max_q / float(step_idx)
                     })
 
                     writer.add_summary(summary_str, episode_idx)
                     writer.flush()
 
                     print('| Reward: {:d} | Episode: {:d} | Qmax: {:.4f}'.format(
-                        int(episode_cumulated_reward), episode_idx, (cumulated_max_q / float(step_idx)))
-                    )
+                        int(self._episode_cumulated_reward),
+                        episode_idx,
+                        (self._cumulated_max_q / float(step_idx))
+                    ))
                     break
 
-    def _train_actor(self, s_batch):
+    def _train_actor_critic(self):
+        state_batch, action_batch, reward_batch, done_batch, final_state_batch = \
+            self._replay_buffer.sample_batch(int(self._args['minibatch_size']))
+
+        # Calculate targets
+        target_q = self._critic.predict_target(
+            final_state_batch, self._actor.predict_target(final_state_batch))
+
+        y_i = []
+        for k in range(int(self._args['minibatch_size'])):
+            if done_batch[k]:
+                y_i.append(reward_batch[k])
+            else:
+                y_i.append(reward_batch[k] + self._critic.gamma * target_q[k])
+
+        # Update the critic given the targets
+        predicted_q_value, _ = self._critic.train(
+            state_batch, action_batch, np.reshape(y_i, (int(self._args['minibatch_size']), 1)))
+
+        self._cumulated_max_q += np.amax(predicted_q_value)
+        self._train_actor(state_batch)
+        self._actor.update_target_network()
+        self._critic.update_target_network()
+
+    def _train_actor(self, state_batch) -> None:
         # Update the actor policy using the sampled gradient
-        a_outs = self._actor.predict(s_batch)
-        grads = self._critic.action_gradients(s_batch, a_outs)
-        self._actor.train(s_batch, grads[0])
+        a_outs = self._actor.predict(state_batch)
+        grads = self._critic.action_gradients(state_batch, a_outs)
+        self._actor.train(state_batch, grads[0])
 
 
 def build_summaries():

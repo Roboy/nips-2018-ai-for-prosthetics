@@ -64,15 +64,15 @@ class Actor(object):
         action_output = tf.multiply(action_output, self._action_bound)
         return state_ph, action_output
 
-    def train(self, inputs, a_gradient):
+    def train(self, state_batch, action_grad_batch):
         self.sess.run(self.optimize, feed_dict={
-            self._state_ph: inputs,
-            self._action_gradient: a_gradient
+            self._state_ph: state_batch,
+            self._action_gradient: action_grad_batch
         })
 
-    def predict(self, inputs):
+    def predict(self, state_batch):
         return self.sess.run(self._action_output, feed_dict={
-            self._state_ph: inputs
+            self._state_ph: state_batch
         })
 
     def predict_target(self, inputs):
