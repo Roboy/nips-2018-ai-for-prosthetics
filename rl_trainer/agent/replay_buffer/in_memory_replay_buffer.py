@@ -6,8 +6,14 @@ from . import ReplayBuffer
 
 
 class InMemoryReplayBuffer(ReplayBuffer):
-    def __init__(self, buffer_size: int, lower_size_limit: int):
+    """
+    The right side of the deque contains the most recent experiences
+    """
+
+    def __init__(self, buffer_size: int, lower_size_limit: int, seed: int = None):
         assert isinstance(buffer_size, int) and isinstance(lower_size_limit, int)
+        if seed is not None:
+            random.seed(seed)
         self._lower_size_limit = lower_size_limit
         self._buffer_size = buffer_size
         self._buffer = deque()

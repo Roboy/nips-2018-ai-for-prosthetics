@@ -10,7 +10,7 @@ def test_main():
     try:
         parser = setup_args_parser()
         args = vars(parser.parse_args())
-        args["max_episodes"] = 1
+        args["max_episodes"] = 2
         main(args)
     finally:
         shutil.rmtree(RESULTS_DIR)

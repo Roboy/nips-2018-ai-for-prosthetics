@@ -68,11 +68,11 @@ class Critic(object):
         q_value_pred = tflearn.fully_connected(net, 1, weights_init=w_init)
         return state_placeholder, action_placeholder, q_value_pred
 
-    def train(self, states_batch, actions_batch, q_value_batch):
+    def train(self, states_batch, actions_batch, q_values_batch):
         return self.sess.run([self._q_value_pred, self._optimize], feed_dict={
             self._state_ph: states_batch,
             self._action_ph: actions_batch,
-            self._q_value_ph: q_value_batch
+            self._q_value_ph: q_values_batch
         })
 
     def predict(self, states_batch, actions_batch):

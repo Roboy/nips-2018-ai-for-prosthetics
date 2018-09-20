@@ -5,10 +5,10 @@ import tensorflow as tf
 import numpy as np
 from osim.env import ProstheticsEnv
 
+from rl_trainer.agent.replay_buffer import InMemoryReplayBuffer
 from rl_trainer.ddpg_impl.flower.action_noise import OrnsteinUhlenbeckActionNoise
 from rl_trainer.ddpg_impl.flower.args_parser import setup_args_parser
 from rl_trainer.ddpg_impl.flower.actor_critic import Actor, Critic
-from rl_trainer.ddpg_impl.flower.replay_buffer import ReplayBuffer
 from rl_trainer.ddpg_impl.flower.train import Train
 
 
@@ -40,7 +40,9 @@ def main(args):
 
         actor_noise = OrnsteinUhlenbeckActionNoise(mu=np.zeros(action_dim))
 
-        replay_buffer = ReplayBuffer(int(args['buffer_size']), int(args['random_seed']))
+        replay_buffer = InMemoryReplayBuffer(buffer_size=int(args["buffer_size"]),
+                                             lower_size_limit=int(args["minibatch_size"]),
+                                             seed=int(args["random_seed"]))
 
         if args["use_gym_monitor"]:
             env = wrappers.Monitor(env, args['monitor_dir'], force=True)

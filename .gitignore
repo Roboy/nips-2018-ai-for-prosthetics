@@ -8,3 +8,5 @@
 # Python
 __pycache__/
 .pytest_cache/
+
+flower_results/
