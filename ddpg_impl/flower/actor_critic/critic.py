@@ -2,7 +2,7 @@ import tensorflow as tf
 import tflearn
 
 
-class CriticNetwork(object):
+class Critic(object):
     """
     Input to the network is the state and action, output is Q(s,a).
     The action must be obtained from the output of the Actor network.

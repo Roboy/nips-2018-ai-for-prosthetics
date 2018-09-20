@@ -3,11 +3,10 @@ from gym import wrappers
 import pprint as pp
 import tensorflow as tf
 import numpy as np
-from osim.env import ProstheticsEnv
 
 from flower.action_noise import OrnsteinUhlenbeckActionNoise
 from flower.args_parser import setup_args_parser
-from flower.ddpg import CriticNetwork
+from flower.actor_critic.critic import Critic
 from flower.actor_critic import Actor
 from flower.train import train
 
@@ -33,10 +32,10 @@ def main(args):
                       float(args['actor_lr']), float(args['tau']),
                       int(args['minibatch_size']))
 
-        critic = CriticNetwork(sess, state_dim, action_dim,
-                               float(args['critic_lr']), float(args['tau']),
-                               float(args['gamma']),
-                               actor.get_num_trainable_vars())
+        critic = Critic(sess, state_dim, action_dim,
+                        float(args['critic_lr']), float(args['tau']),
+                        float(args['gamma']),
+                        actor.get_num_trainable_vars())
 
         actor_noise = OrnsteinUhlenbeckActionNoise(mu=np.zeros(action_dim))
 
