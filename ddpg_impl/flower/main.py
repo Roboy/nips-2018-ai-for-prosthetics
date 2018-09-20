@@ -5,8 +5,9 @@ import tensorflow as tf
 import numpy as np
 from osim.env import ProstheticsEnv
 
-from args_parser import setup_args_parser
-from ddpg import ActorNetwork, CriticNetwork, OrnsteinUhlenbeckActionNoise, train
+from flower.action_noise import OrnsteinUhlenbeckActionNoise
+from flower.args_parser import setup_args_parser
+from flower.ddpg import ActorNetwork, CriticNetwork, train
 
 
 def main(args):

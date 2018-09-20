@@ -14,7 +14,7 @@ import numpy as np
 
 import tflearn
 
-from replay_buffer import ReplayBuffer
+from flower.replay_buffer import ReplayBuffer
 
 
 # ===========================
@@ -34,13 +34,12 @@ class ActorNetwork(object):
         self.sess = sess
         self.s_dim = state_dim
         self.a_dim = action_dim
-        self.action_bound = action_bound
-        self.learning_rate = learning_rate
-        self.tau = tau
-        self.batch_size = batch_size
+        self._action_bound = action_bound
+        self._learning_rate = learning_rate
+        self._tau = tau
+        self._batch_size = batch_size
 
-        # Actor Network
-        self.inputs, self.out, self.scaled_out = self.create_actor_network()
+        self._inputs, self.out, self.scaled_out = self.create_actor_network()
 
         self.network_params = tf.trainable_variables()
 
@@ -53,8 +52,8 @@ class ActorNetwork(object):
         # Op for periodically updating target network with online network
         # weights
         self.update_target_network_params = \
-            [self.target_network_params[i].assign(tf.multiply(self.network_params[i], self.tau) +
-                                                  tf.multiply(self.target_network_params[i], 1. - self.tau))
+            [self.target_network_params[i].assign(tf.multiply(self.network_params[i], self._tau) +
+                                                  tf.multiply(self.target_network_params[i], 1. - self._tau))
                 for i in range(len(self.target_network_params))]
 
         # This gradient will be provided by the critic network
@@ -63,10 +62,10 @@ class ActorNetwork(object):
         # Combine the gradients here
         self.unnormalized_actor_gradients = tf.gradients(
             self.scaled_out, self.network_params, -self.action_gradient)
-        self.actor_gradients = list(map(lambda x: tf.div(x, self.batch_size), self.unnormalized_actor_gradients))
+        self.actor_gradients = list(map(lambda x: tf.div(x, self._batch_size), self.unnormalized_actor_gradients))
 
         # Optimization Op
-        self.optimize = tf.train.AdamOptimizer(self.learning_rate).\
+        self.optimize = tf.train.AdamOptimizer(self._learning_rate).\
             apply_gradients(zip(self.actor_gradients, self.network_params))
 
         self.num_trainable_vars = len(
@@ -85,18 +84,18 @@ class ActorNetwork(object):
         out = tflearn.fully_connected(
             net, self.a_dim, activation='tanh', weights_init=w_init)
         # Scale output to -action_bound to action_bound
-        scaled_out = tf.multiply(out, self.action_bound)
+        scaled_out = tf.multiply(out, self._action_bound)
         return inputs, out, scaled_out
 
     def train(self, inputs, a_gradient):
         self.sess.run(self.optimize, feed_dict={
-            self.inputs: inputs,
+            self._inputs: inputs,
             self.action_gradient: a_gradient
         })
 
     def predict(self, inputs):
         return self.sess.run(self.scaled_out, feed_dict={
-            self.inputs: inputs
+            self._inputs: inputs
         })
 
     def predict_target(self, inputs):
@@ -206,29 +205,6 @@ class CriticNetwork(object):
 
     def update_target_network(self):
         self.sess.run(self.update_target_network_params)
-
-# Taken from https://github.com/openai/baselines/blob/master/baselines/ddpg/noise.py, which is
-# based on http://math.stackexchange.com/questions/1287634/implementing-ornstein-uhlenbeck-in-matlab
-class OrnsteinUhlenbeckActionNoise:
-    def __init__(self, mu, sigma=0.3, theta=.15, dt=1e-2, x0=None):
-        self.theta = theta
-        self.mu = mu
-        self.sigma = sigma
-        self.dt = dt
-        self.x0 = x0
-        self.reset()
-
-    def __call__(self):
-        x = self.x_prev + self.theta * (self.mu - self.x_prev) * self.dt + \
-                self.sigma * np.sqrt(self.dt) * np.random.normal(size=self.mu.shape)
-        self.x_prev = x
-        return x
-
-    def reset(self):
-        self.x_prev = self.x0 if self.x0 is not None else np.zeros_like(self.mu)
-
-    def __repr__(self):
-        return 'OrnsteinUhlenbeckActionNoise(mu={}, sigma={})'.format(self.mu, self.sigma)
 
 # ===========================
 #   Tensorflow Summary Ops

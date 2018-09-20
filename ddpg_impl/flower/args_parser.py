@@ -1,5 +1,7 @@
 import argparse
+import os
 
+RESULTS_DIR = "./flower/results"
 
 def setup_args_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description='provide arguments for DDPG agent')
@@ -19,10 +21,10 @@ def setup_args_parser() -> argparse.ArgumentParser:
     parser.add_argument('--max-episode-len', help='max length of 1 episode', default=1000)
     parser.add_argument('--render-env', help='render the gym env', action='store_true')
     parser.add_argument('--use-gym-monitor', help='record gym results', action='store_true')
-    parser.add_argument('--monitor-dir', help='directory for storing gym results', default='./results/gym_ddpg')
-    parser.add_argument('--summary-dir', help='directory for storing tensorboard info', default='./ddpg_impl/flower/results/tf_ddpg')
+    parser.add_argument('--monitor-dir', help='directory for storing gym results', default=os.path.join(RESULTS_DIR, "gym_ddpg"))
+    parser.add_argument('--summary-dir', help='directory for storing tensorboard info', default=os.path.join(RESULTS_DIR, "tf_ddpg"))
 
     parser.set_defaults(render_env=False)
-    parser.set_defaults(use_gym_monitor=True)
+    parser.set_defaults(use_gym_monitor=False)
 
     return parser
