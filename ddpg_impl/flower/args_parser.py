@@ -1,7 +1,7 @@
 import argparse
 import os
 
-RESULTS_DIR = "./flower/results"
+RESULTS_DIR = "./flower_results"
 
 
 def setup_args_parser() -> argparse.ArgumentParser:
