@@ -9,7 +9,7 @@ from rl_trainer.ddpg_impl.flower.action_noise import OrnsteinUhlenbeckActionNois
 from rl_trainer.ddpg_impl.flower.args_parser import setup_args_parser
 from rl_trainer.ddpg_impl.flower.actor_critic import Actor, Critic
 from rl_trainer.ddpg_impl.flower.replay_buffer import ReplayBuffer
-from rl_trainer.ddpg_impl.flower.train import train
+from rl_trainer.ddpg_impl.flower.train import Train
 
 
 def main(args):
@@ -45,7 +45,8 @@ def main(args):
         if args["use_gym_monitor"]:
             env = wrappers.Monitor(env, args['monitor_dir'], force=True)
 
-        train(sess, env, args, actor, critic, actor_noise, replay_buffer)
+        Train(sess=sess, env=env, args=args, actor=actor, critic=critic,
+              actor_noise=actor_noise, replay_buffer=replay_buffer).train()
 
         if args['use_gym_monitor']:
             env.monitor.close()
