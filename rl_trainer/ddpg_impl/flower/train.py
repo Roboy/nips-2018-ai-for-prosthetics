@@ -20,14 +20,13 @@ class Train:
         self._env = env
         self._replay_buffer = replay_buffer
         self._sess = sess
-        self._episode_cumulated_reward = 0
-        self._cumulated_max_q = 0
+        self._episode_reward = 0
+        self._episode_max_q = 0
 
     def train(self):
-        summary_ops, episode_reward, episode_ave_max_q = build_summaries()
-
+        self.build_summaries()
         self._sess.run(tf.global_variables_initializer())
-        writer = tf.summary.FileWriter(self._args['summary_dir'], self._sess.graph)
+        self.writer = tf.summary.FileWriter(self._args['summary_dir'], self._sess.graph)
 
         # Initialize target network weights
         self._actor.update_target_network()
@@ -39,6 +38,9 @@ class Train:
         # tflearn.is_training(True)
 
         for episode_idx in range(int(self._args['max_episodes'])):
+
+            self._episode_reward = 0
+            self._episode_max_q = 0
 
             current_state = self._env.reset()
 
@@ -63,23 +65,24 @@ class Train:
                     self._train_actor_critic()
 
                 current_state = new_state
-                self._episode_cumulated_reward += reward
+                self._episode_reward += reward
 
                 if done:
-                    summary_str = self._sess.run(summary_ops, feed_dict={
-                        episode_reward: self._episode_cumulated_reward,
-                        episode_ave_max_q: self._cumulated_max_q / float(step_idx)
-                    })
-
-                    writer.add_summary(summary_str, episode_idx)
-                    writer.flush()
-
-                    print('| Reward: {:d} | Episode: {:d} | Qmax: {:.4f}'.format(
-                        int(self._episode_cumulated_reward),
-                        episode_idx,
-                        (self._cumulated_max_q / float(step_idx))
-                    ))
+                    self.log_episode(episode_idx, step_idx)
                     break
+
+    def log_episode(self, episode_idx, step_idx):
+        summary_str = self._sess.run(self.summary_ops, feed_dict={
+            self.episode_reward_ph: self._episode_reward,
+            self.episode_max_q_ph: self._episode_max_q,
+        })
+        self.writer.add_summary(summary_str, episode_idx)
+        self.writer.flush()
+        print('| Reward: {:d} | Episode: {:d} | Qmax: {:.4f}'.format(
+            int(self._episode_reward),
+            episode_idx,
+            (self._episode_max_q / float(step_idx))
+        ))
 
     def _train_actor_critic(self):
         state_batch, action_batch, reward_batch, done_batch, final_state_batch = \
@@ -100,7 +103,7 @@ class Train:
         predicted_q_value, _ = self._critic.train(
             state_batch, action_batch, np.reshape(y_i, (int(self._args['minibatch_size']), 1)))
 
-        self._cumulated_max_q += np.amax(predicted_q_value)
+        self._episode_max_q = np.amax(predicted_q_value)
         self._train_actor(state_batch)
         self._actor.update_target_network()
         self._critic.update_target_network()
@@ -111,13 +114,9 @@ class Train:
         grads = self._critic.action_gradients(state_batch, a_outs)
         self._actor.train(state_batch, grads[0])
 
-
-def build_summaries():
-    episode_reward = tf.Variable(0.)
-    tf.summary.scalar("Reward", episode_reward)
-    episode_ave_max_q = tf.Variable(0.)
-    tf.summary.scalar("Qmax Value", episode_ave_max_q)
-
-    summary_ops = tf.summary.merge_all()
-
-    return summary_ops, episode_reward, episode_ave_max_q
+    def build_summaries(self):
+        self.episode_reward_ph = tf.placeholder(tf.float32)
+        tf.summary.scalar("Reward", self.episode_reward_ph)
+        self.episode_max_q_ph = tf.placeholder(tf.float32)
+        tf.summary.scalar("Qmax Value", self.episode_max_q_ph)
+        self.summary_ops = tf.summary.merge_all()
