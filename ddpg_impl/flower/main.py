@@ -7,7 +7,8 @@ from osim.env import ProstheticsEnv
 
 from flower.action_noise import OrnsteinUhlenbeckActionNoise
 from flower.args_parser import setup_args_parser
-from flower.ddpg import ActorNetwork, CriticNetwork
+from flower.ddpg import CriticNetwork
+from flower.actor_critic import Actor
 from flower.train import train
 
 
@@ -28,9 +29,9 @@ def main(args):
         # Ensure action bound is symmetric
         # assert (env.action_space.high == -env.action_space.low)
 
-        actor = ActorNetwork(sess, state_dim, action_dim, action_bound,
-                             float(args['actor_lr']), float(args['tau']),
-                             int(args['minibatch_size']))
+        actor = Actor(sess, state_dim, action_dim, action_bound,
+                      float(args['actor_lr']), float(args['tau']),
+                      int(args['minibatch_size']))
 
         critic = CriticNetwork(sess, state_dim, action_dim,
                                float(args['critic_lr']), float(args['tau']),

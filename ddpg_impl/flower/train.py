@@ -1,9 +1,10 @@
 from typing import Callable
 
-from flower.ddpg import ActorNetwork, CriticNetwork
+from flower.ddpg import CriticNetwork
 import tensorflow as tf
 import numpy as np
 
+from flower.actor_critic import Actor
 from flower.replay_buffer import ReplayBuffer
 
 
@@ -19,7 +20,7 @@ def build_summaries():
     return summary_ops, summary_vars
 
 
-def train(sess: tf.Session, env, args, actor: ActorNetwork, critic: CriticNetwork, actor_noise: Callable):
+def train(sess: tf.Session, env, args, actor: Actor, critic: CriticNetwork, actor_noise: Callable):
     # Set up summary Ops
     summary_ops, summary_vars = build_summaries()
 
