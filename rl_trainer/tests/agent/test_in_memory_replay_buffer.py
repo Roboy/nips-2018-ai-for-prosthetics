@@ -1,6 +1,7 @@
 import pytest
 
-from rl_trainer.agent.replay_buffer.replay_buffer import InMemoryReplayBuffer
+from rl_trainer.agent.replay_buffer import InMemoryReplayBuffer
+from rl_trainer.commons import ExperienceTupleBatch
 from rl_trainer.commons.experience_tuple import mock_experience_tuple
 
 BUFFER_SIZE = 10
@@ -27,3 +28,14 @@ def test_can_provide_samples():
     assert not buffer.can_provide_samples()
     with pytest.raises(AssertionError):
         buffer.sample_batch(3)
+
+
+def test_can_sample_batch():
+    buffer = InMemoryReplayBuffer(buffer_size=BUFFER_SIZE,
+                                  lower_size_limit=LOWER_SIZE_LIMIT)
+    buffer.add(EXPERIENCE_TUPLE)
+    buffer.add(EXPERIENCE_TUPLE)
+
+    batch = buffer.sample_batch(batch_size=2)
+    assert isinstance(batch, ExperienceTupleBatch)
+    assert len(batch) is 2

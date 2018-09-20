@@ -59,9 +59,6 @@ class Train:
                     np.reshape(new_state, (self._actor.s_dim,)),
                 )
 
-                # Keep adding experience to the memory until
-                # there are at least minibatch size samples
-
                 if self._replay_buffer.size() > int(self._args['minibatch_size']):
                     self._train_actor_critic()
 
