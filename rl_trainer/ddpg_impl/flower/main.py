@@ -3,12 +3,13 @@ from gym import wrappers
 import pprint as pp
 import tensorflow as tf
 import numpy as np
+from osim.env import ProstheticsEnv
 
-from flower.action_noise import OrnsteinUhlenbeckActionNoise
-from flower.args_parser import setup_args_parser
-from flower.actor_critic.critic import Critic
-from flower.actor_critic import Actor
-from flower.train import train
+from rl_trainer.ddpg_impl.flower.action_noise import OrnsteinUhlenbeckActionNoise
+from rl_trainer.ddpg_impl.flower.args_parser import setup_args_parser
+from rl_trainer.ddpg_impl.flower.actor_critic import Actor, Critic
+from rl_trainer.ddpg_impl.flower.replay_buffer import ReplayBuffer
+from rl_trainer.ddpg_impl.flower.train import train
 
 
 def main(args):
@@ -35,18 +36,16 @@ def main(args):
         critic = Critic(sess, state_dim, action_dim,
                         float(args['critic_lr']), float(args['tau']),
                         float(args['gamma']),
-                        actor.get_num_trainable_vars())
+                        actor.num_trainable_vars)
 
         actor_noise = OrnsteinUhlenbeckActionNoise(mu=np.zeros(action_dim))
 
-        if args['use_gym_monitor']:
-            if not args['render_env']:
-                env = wrappers.Monitor(
-                    env, args['monitor_dir'], video_callable=False, force=True)
-            else:
-                env = wrappers.Monitor(env, args['monitor_dir'], force=True)
+        replay_buffer = ReplayBuffer(int(args['buffer_size']), int(args['random_seed']))
 
-        train(sess, env, args, actor, critic, actor_noise)
+        if args["use_gym_monitor"]:
+            env = wrappers.Monitor(env, args['monitor_dir'], force=True)
+
+        train(sess, env, args, actor, critic, actor_noise, replay_buffer)
 
         if args['use_gym_monitor']:
             env.monitor.close()

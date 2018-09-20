@@ -1,11 +1,11 @@
 from typing import Callable
 
-from flower.actor_critic.critic import Critic
+from rl_trainer.ddpg_impl.flower.actor_critic.critic import Critic
 import tensorflow as tf
 import numpy as np
 
-from flower.actor_critic import Actor
-from flower.replay_buffer import ReplayBuffer
+from rl_trainer.ddpg_impl.flower.actor_critic import Actor
+from rl_trainer.ddpg_impl.flower.replay_buffer import ReplayBuffer
 
 
 def build_summaries():
@@ -14,15 +14,14 @@ def build_summaries():
     episode_ave_max_q = tf.Variable(0.)
     tf.summary.scalar("Qmax Value", episode_ave_max_q)
 
-    summary_vars = [episode_reward, episode_ave_max_q]
     summary_ops = tf.summary.merge_all()
 
-    return summary_ops, summary_vars
+    return summary_ops, episode_reward, episode_ave_max_q
 
 
-def train(sess: tf.Session, env, args, actor: Actor, critic: Critic, actor_noise: Callable):
+def train(sess: tf.Session, env, args, actor: Actor, critic: Critic, actor_noise: Callable, replay_buffer: ReplayBuffer):
     # Set up summary Ops
-    summary_ops, summary_vars = build_summaries()
+    summary_ops, episode_reward, episode_ave_max_q = build_summaries()
 
     sess.run(tf.global_variables_initializer())
     writer = tf.summary.FileWriter(args['summary_dir'], sess.graph)
@@ -31,34 +30,34 @@ def train(sess: tf.Session, env, args, actor: Actor, critic: Critic, actor_noise
     actor.update_target_network()
     critic.update_target_network()
 
-    # Initialize replay memory
-    replay_buffer = ReplayBuffer(int(args['buffer_size']), int(args['random_seed']))
-
     # Needed to enable BatchNorm.
     # This hurts the performance on Pendulum but could be useful
     # in other environments.
     # tflearn.is_training(True)
 
-    for i in range(int(args['max_episodes'])):
+    for episode_idx in range(int(args['max_episodes'])):
 
-        s = env.reset()
+        current_state = env.reset()
 
-        ep_reward = 0
-        ep_ave_max_q = 0
+        episode_cumulated_reward = 0
+        cumulated_max_q = 0
 
-        for j in range(int(args['max_episode_len'])):
+        for step_idx in range(int(args['max_episode_len'])):
 
             if args['render_env']:
                 env.render()
 
-            # Added exploration noise
-            # a = actor.predict(np.reshape(s, (1, 3))) + (1. / (1. + i))
-            a = actor.predict(np.reshape(s, (1, actor.s_dim))) + actor_noise()
+            action = actor.predict(np.reshape(current_state, (1, actor.s_dim))) + actor_noise()
 
-            s2, r, done, info = env.step(a[0])
+            new_state, reward, done, _ = env.step(action[0])
 
-            replay_buffer.add(np.reshape(s, (actor.s_dim,)), np.reshape(a, (actor.a_dim,)), r,
-                              done, np.reshape(s2, (actor.s_dim,)))
+            replay_buffer.add(
+                np.reshape(current_state, (actor.s_dim,)),
+                np.reshape(action, (actor.a_dim,)),
+                reward,
+                done,
+                np.reshape(new_state, (actor.s_dim,)),
+            )
 
             # Keep adding experience to the memory until
             # there are at least minibatch size samples
@@ -81,7 +80,7 @@ def train(sess: tf.Session, env, args, actor: Actor, critic: Critic, actor_noise
                 predicted_q_value, _ = critic.train(
                     s_batch, a_batch, np.reshape(y_i, (int(args['minibatch_size']), 1)))
 
-                ep_ave_max_q += np.amax(predicted_q_value)
+                cumulated_max_q += np.amax(predicted_q_value)
 
                 # Update the actor policy using the sampled gradient
                 a_outs = actor.predict(s_batch)
@@ -92,18 +91,19 @@ def train(sess: tf.Session, env, args, actor: Actor, critic: Critic, actor_noise
                 actor.update_target_network()
                 critic.update_target_network()
 
-            s = s2
-            ep_reward += r
+            current_state = new_state
+            episode_cumulated_reward += reward
 
             if done:
                 summary_str = sess.run(summary_ops, feed_dict={
-                    summary_vars[0]: ep_reward,
-                    summary_vars[1]: ep_ave_max_q / float(j)
+                    episode_reward: episode_cumulated_reward,
+                    episode_ave_max_q: cumulated_max_q / float(step_idx)
                 })
 
-                writer.add_summary(summary_str, i)
+                writer.add_summary(summary_str, episode_idx)
                 writer.flush()
 
-                print('| Reward: {:d} | Episode: {:d} | Qmax: {:.4f}'.format(int(ep_reward), \
-                                                                             i, (ep_ave_max_q / float(j))))
+                print('| Reward: {:d} | Episode: {:d} | Qmax: {:.4f}'.format(
+                    int(episode_cumulated_reward), episode_idx, (cumulated_max_q / float(step_idx)))
+                )
                 break

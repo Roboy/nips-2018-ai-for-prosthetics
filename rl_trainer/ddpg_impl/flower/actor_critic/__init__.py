@@ -10,3 +10,5 @@ and developed with tflearn + Tensorflow
 Author: Patrick Emami
 """
 from .actor import Actor
+from .critic import Critic
+
