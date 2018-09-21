@@ -1,19 +1,18 @@
-import random
-
 import numpy as np
 
 import gym
+from typeguard import typechecked
 
 
 class MockSpace(gym.Space):
 
     def __init__(self, size: int):
-        self.shape = (size,)
+        super().__init__(shape=(size,))
         self.high = np.ones(size)
         self.low = np.zeros(size)
 
     def sample(self):
-        return np.random.uniform(self.low, self.high)
+        return np.random.uniform(self.low, self.high).tolist()
 
     def contains(self, x):
         return all(self.low <= x) and all(x <= self.high)
@@ -21,18 +20,19 @@ class MockSpace(gym.Space):
 
 class MockEnvironment(gym.Env):
     action_space = MockSpace(2)
-    state_space = MockSpace(3)
-    _IS_STATE_TERMINAL = [False, False, True]
+    observation_space = MockSpace(3)
 
-    def __init__(self):
-        self._done = iter(self._IS_STATE_TERMINAL)
+    @typechecked
+    def __init__(self, episode_length: int = 5):
+        self._are_states_terminal = [False]*(episode_length-1) + [True]
+        self._done = iter(self._are_states_terminal)
 
     def reset(self):
-        self._done = iter(self._IS_STATE_TERMINAL)
-        return self.state_space.sample()
+        self._done = iter(self._are_states_terminal)
+        return self.observation_space.sample()
 
     def step(self, action):
-        final_state = self.state_space.sample()
+        final_state = self.observation_space.sample()
         reward = 1
         done = next(self._done)
         info = None

@@ -9,15 +9,12 @@ from rl_trainer.agent.replay_buffer import InMemoryReplayBuffer
 from rl_trainer.ddpg_impl.flower.action_noise import OrnsteinUhlenbeckActionNoise
 from rl_trainer.ddpg_impl.flower.args_parser import setup_args_parser
 from rl_trainer.ddpg_impl.flower.actor_critic import Actor, Critic
-from rl_trainer.ddpg_impl.flower.train import Train, Agent
+from rl_trainer.ddpg_impl.flower.train import Train, TFDDPGAgent
 
 
-def main(args):
+def main(args, env: gym.Env):
 
     with tf.Session() as sess:
-
-        env = gym.make(args["env"])
-        #env = ProstheticsEnv(visualize=True)
         seed = int(args['random_seed'])
         np.random.seed(seed)
         tf.set_random_seed(seed)
@@ -50,12 +47,9 @@ def main(args):
         train = Train(
             sess=sess,
             env=env,
-            actor=actor,
-            critic=critic,
-            actor_noise=actor_noise,
             replay_buffer=replay_buffer,
             tf_summary_dir=args['summary_dir'],
-            agent=Agent(
+            agent=TFDDPGAgent(
                 actor=actor,
                 critic=critic,
                 replay_buffer=replay_buffer,
@@ -77,4 +71,6 @@ if __name__ == '__main__':
     parser = setup_args_parser()
     args = vars(parser.parse_args())
     pp.pprint(args)
-    main(args)
+    env = gym.make(args["env"])
+    #env = ProstheticsEnv(visualize=True)
+    main(args, env)

@@ -11,4 +11,4 @@ Author: Patrick Emami
 """
 from .actor import Actor
 from .critic import Critic
-
+from .tf_ddpg_agent import TFDDPGAgent

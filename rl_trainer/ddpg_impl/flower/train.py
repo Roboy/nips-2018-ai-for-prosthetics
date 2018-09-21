@@ -1,40 +1,17 @@
-from typing import Callable
-
 import gym
 
 from rl_trainer.agent.replay_buffer import ReplayBuffer
 from rl_trainer.commons import ExperienceTuple
-from rl_trainer.ddpg_impl.flower.actor_critic.critic import Critic
 import tensorflow as tf
-import numpy as np
 
-from rl_trainer.ddpg_impl.flower.actor_critic import Actor
-
-
-class Agent:
-    def __init__(self, actor: Actor, critic: Critic,
-                 replay_buffer: ReplayBuffer, actor_noise: Callable):
-        self.actor_noise = actor_noise
-        self.replay_buffer = replay_buffer
-        self.critic = critic
-        self.actor = actor
-
-    def act(self, current_state):
-        action = self.actor.predict(
-            states_batch=np.array([current_state + self.actor_noise()]),
-        )[0]  # unpack actions batch of size 1
-        return action
+from rl_trainer.ddpg_impl.flower.actor_critic import TFDDPGAgent
 
 
 class Train:
-    def __init__(self, sess: tf.Session, env: gym.Env, actor: Actor,
-                 critic: Critic, actor_noise: Callable, replay_buffer: ReplayBuffer,
-                 tf_summary_dir: str, agent: Agent):
+    def __init__(self, sess: tf.Session, env: gym.Env, replay_buffer: ReplayBuffer,
+                 tf_summary_dir: str, agent: TFDDPGAgent):
         self._agent = agent
         self._tf_summary_dir = tf_summary_dir
-        self._actor_noise = actor_noise
-        self._critic = critic
-        self._actor = actor
         self._env = env
         self._replay_buffer = replay_buffer
         self._sess = sess
@@ -47,8 +24,7 @@ class Train:
         self.writer = tf.summary.FileWriter(self._tf_summary_dir, self._sess.graph)
 
         # Initialize target network weight
-        self._agent.actor.update_target_network()
-        self._agent.critic.update_target_network()
+        self._agent.update_target_nets()
 
         # Needed to enable BatchNorm.
         # This hurts the performance on Pendulum but could be useful
@@ -69,7 +45,7 @@ class Train:
                 action = self._agent.act(current_state)
                 new_state, reward, done, _ = self._env.step(action)
 
-                self._agent.replay_buffer.extend([
+                self._agent._replay_buffer.extend([
                     ExperienceTuple(
                         initial_state=current_state,
                         action=action,
@@ -79,13 +55,14 @@ class Train:
                     ),
                 ])
 
-                if self._agent.replay_buffer.can_provide_samples():
-                    self._train_with_replay_buffer(batch_size)
+                if self._agent._replay_buffer.can_provide_samples():
+                    self._agent._train_with_replay_buffer(batch_size)
 
                 current_state = new_state
                 self._episode_reward += reward
 
                 if done:
+                    self._episode_max_q = self._agent.episode_max_q  # the trainer shouldnt know anything about any q_values
                     self.log_episode(episode_idx, step_idx)
                     break
 
@@ -102,41 +79,7 @@ class Train:
             (self._episode_max_q / float(step_idx))
         ))
 
-    def _train_with_replay_buffer(self, batch_size: int):
-        batch = self._replay_buffer.sample_batch(batch_size)
 
-        # Calculate targets
-        target_q_values = self._critic.predict_target(
-            states_batch=np.array(batch.final_states),
-            actions_batch=self._actor.predict_target(batch.final_states),
-        )
-
-        q_values = []
-        for target_q_value, exp_tuple in zip(target_q_values, batch.experience_tuples):
-            if exp_tuple.final_state_is_terminal:
-                q_values.append(exp_tuple.reward)
-            else:
-                q_values.append(exp_tuple.reward + self._critic.gamma*target_q_value)
-
-        # Update the critic given the targets
-        predicted_q_value, _ = self._critic.train(
-            states_batch=np.array(batch.initial_states),
-            actions_batch=np.array(batch.actions),
-            q_values_batch=np.array(q_values).reshape((-1, 1)),
-        )
-        self._episode_max_q = np.amax(predicted_q_value)
-
-        self._train_actor(batch.initial_states)
-        self._actor.update_target_network()
-        self._critic.update_target_network()
-
-    def _train_actor(self, states_batch) -> None:
-        # Update the actor policy using the sampled gradient
-        actions_batch = self._actor.predict(states_batch=np.array(states_batch))
-        action_grads_batch = self._critic.action_gradients(
-            states_batch=np.array(states_batch), actions_batch=actions_batch)
-        self._actor.train(
-            states_batch=np.array(states_batch), action_grads_batch=action_grads_batch[0])
 
     def build_summaries(self):
         self.episode_reward_ph = tf.placeholder(tf.float32)
