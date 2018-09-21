@@ -1,12 +1,12 @@
 import numpy as np
-from typing import Sequence, NamedTuple
+from typing import NamedTuple, Collection
 
 
 class ExperienceTuple(NamedTuple):
-    initial_state: Sequence[float]
-    action: Sequence[float]
+    initial_state: Collection[float]
+    action: Collection[float]
     reward: float
-    final_state: Sequence[float]
+    final_state: Collection[float]
     final_state_is_terminal: bool
 
     def __eq__(self, other) -> bool:
@@ -21,11 +21,11 @@ class ExperienceTuple(NamedTuple):
 
 class ExperienceTupleBatch:
     """
-    Allows to access the sequences of attributes withouth constructing
+    Allows to access the list of attributes without constructing
     them explicitly. For example: state_batch = batch.initial_states
     """
 
-    def __init__(self, experience_tuples: Sequence[ExperienceTuple]):
+    def __init__(self, experience_tuples: Collection[ExperienceTuple]):
         for tup in experience_tuples:
             assert isinstance(tup, ExperienceTuple)
         self.experience_tuples = experience_tuples

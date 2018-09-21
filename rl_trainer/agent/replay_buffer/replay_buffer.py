@@ -1,11 +1,13 @@
+from typing import Collection
+
 from rl_trainer.commons import ExperienceTuple, ExperienceTupleBatch
 
 
 class ReplayBuffer:
-    def add(self, exp_tuple: ExperienceTuple) -> None:
+    def extend(self, exp_tuples: Collection[ExperienceTuple]) -> None:
         raise NotImplementedError
 
-    def sample_batch(self, batch_size: int) -> ExperienceTupleBatch:
+    def sample_batch(self, batch_size: int = None) -> ExperienceTupleBatch:
         raise NotImplementedError
 
     def clear(self) -> None:

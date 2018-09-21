@@ -69,13 +69,15 @@ class Train:
                 action = self._agent.act(current_state)
                 new_state, reward, done, _ = self._env.step(action)
 
-                self._agent.replay_buffer.add(ExperienceTuple(
-                    initial_state=current_state,
-                    action=action,
-                    reward=reward,
-                    final_state=new_state,
-                    final_state_is_terminal=done,
-                ))
+                self._agent.replay_buffer.extend([
+                    ExperienceTuple(
+                        initial_state=current_state,
+                        action=action,
+                        reward=reward,
+                        final_state=new_state,
+                        final_state_is_terminal=done,
+                    ),
+                ])
 
                 if self._agent.replay_buffer.can_provide_samples():
                     self._train_with_replay_buffer(batch_size)

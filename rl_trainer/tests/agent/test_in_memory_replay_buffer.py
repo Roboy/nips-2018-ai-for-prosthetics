@@ -18,7 +18,7 @@ def test_lower_size_limit():
     buffer = InMemoryReplayBuffer(buffer_size=BUFFER_SIZE,
                                   lower_size_limit=LOWER_SIZE_LIMIT)
     assert not buffer.can_provide_samples()
-    buffer.add(EXPERIENCE_TUPLE)
+    buffer.extend([EXPERIENCE_TUPLE])
     assert buffer.can_provide_samples()
 
 
@@ -33,8 +33,8 @@ def test_can_provide_samples():
 def test_can_sample_batch():
     buffer = InMemoryReplayBuffer(buffer_size=BUFFER_SIZE,
                                   lower_size_limit=LOWER_SIZE_LIMIT)
-    buffer.add(EXPERIENCE_TUPLE)
-    buffer.add(EXPERIENCE_TUPLE)
+    buffer.extend([EXPERIENCE_TUPLE])
+    buffer.extend([EXPERIENCE_TUPLE])
 
     batch = buffer.sample_batch(batch_size=2)
     assert isinstance(batch, ExperienceTupleBatch)
