@@ -14,15 +14,20 @@ class TFDDPGAgent:
         self._actor = actor
 
     def act(self, current_state):
+        self._train()
         action = self._actor.predict(states_batch=np.array([current_state]))
         return action[0] + self._actor_noise()  # unpack tf batch shape
+
+    def _train(self):
+        if self._replay_buffer.can_provide_samples():
+            self._train_with_replay_buffer()
 
     def update_target_nets(self):
         self._actor.update_target_network()
         self._critic.update_target_network()
 
-    def _train_with_replay_buffer(self, batch_size: int):
-        batch = self._replay_buffer.sample_batch(batch_size)
+    def _train_with_replay_buffer(self):
+        batch = self._replay_buffer.sample_batch()
 
         # Calculate targets
         target_q_values = self._critic.predict_target(
@@ -55,3 +60,5 @@ class TFDDPGAgent:
             states_batch=np.array(states_batch), actions_batch=actions_batch)
         self._actor.train(
             states_batch=np.array(states_batch), action_grads_batch=action_grads_batch[0])
+
+

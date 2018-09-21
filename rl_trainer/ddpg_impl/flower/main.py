@@ -47,7 +47,6 @@ def main(args, env: gym.Env):
         train = Train(
             sess=sess,
             env=env,
-            replay_buffer=replay_buffer,
             tf_summary_dir=args['summary_dir'],
             agent=TFDDPGAgent(
                 actor=actor,
@@ -60,7 +59,6 @@ def main(args, env: gym.Env):
             num_episodes=int(args['max_episodes']),
             max_episode_len=int(args["max_episode_len"]),
             render_env=args['render_env'],
-            batch_size=int(args['minibatch_size']),
         )
 
         if args['use_gym_monitor']:
