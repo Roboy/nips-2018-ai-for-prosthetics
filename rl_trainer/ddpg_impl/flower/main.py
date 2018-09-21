@@ -9,7 +9,7 @@ from rl_trainer.agent.replay_buffer import InMemoryReplayBuffer
 from rl_trainer.ddpg_impl.flower.action_noise import OrnsteinUhlenbeckActionNoise
 from rl_trainer.ddpg_impl.flower.args_parser import setup_args_parser
 from rl_trainer.ddpg_impl.flower.actor_critic import Actor, Critic
-from rl_trainer.ddpg_impl.flower.train import Train
+from rl_trainer.ddpg_impl.flower.train import Train, Agent
 
 
 def main(args):
@@ -55,6 +55,12 @@ def main(args):
             actor_noise=actor_noise,
             replay_buffer=replay_buffer,
             tf_summary_dir=args['summary_dir'],
+            agent=Agent(
+                actor=actor,
+                critic=critic,
+                replay_buffer=replay_buffer,
+                actor_noise=actor_noise,
+            )
         )
         train.train(
             num_episodes=int(args['max_episodes']),

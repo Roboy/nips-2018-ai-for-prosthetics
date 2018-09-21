@@ -11,10 +11,26 @@ import numpy as np
 from rl_trainer.ddpg_impl.flower.actor_critic import Actor
 
 
+class Agent:
+    def __init__(self, actor: Actor, critic: Critic,
+                 replay_buffer: ReplayBuffer, actor_noise: Callable):
+        self.actor_noise = actor_noise
+        self.replay_buffer = replay_buffer
+        self.critic = critic
+        self.actor = actor
+
+    def act(self, current_state):
+        action = self.actor.predict(
+            states_batch=np.array([current_state + self.actor_noise()]),
+        )[0]  # unpack actions batch of size 1
+        return action
+
+
 class Train:
     def __init__(self, sess: tf.Session, env: gym.Env, actor: Actor,
                  critic: Critic, actor_noise: Callable, replay_buffer: ReplayBuffer,
-                 tf_summary_dir: str):
+                 tf_summary_dir: str, agent: Agent):
+        self._agent = agent
         self._tf_summary_dir = tf_summary_dir
         self._actor_noise = actor_noise
         self._critic = critic
@@ -30,9 +46,9 @@ class Train:
         self._sess.run(tf.global_variables_initializer())
         self.writer = tf.summary.FileWriter(self._tf_summary_dir, self._sess.graph)
 
-        # Initialize target network weights
-        self._actor.update_target_network()
-        self._critic.update_target_network()
+        # Initialize target network weight
+        self._agent.actor.update_target_network()
+        self._agent.critic.update_target_network()
 
         # Needed to enable BatchNorm.
         # This hurts the performance on Pendulum but could be useful
@@ -50,10 +66,10 @@ class Train:
 
                 if render_env:
                     self._env.render()
-                action = self._act(current_state)
+                action = self._agent.act(current_state)
                 new_state, reward, done, _ = self._env.step(action)
 
-                self._replay_buffer.add(ExperienceTuple(
+                self._agent.replay_buffer.add(ExperienceTuple(
                     initial_state=current_state,
                     action=action,
                     reward=reward,
@@ -61,7 +77,7 @@ class Train:
                     final_state_is_terminal=done,
                 ))
 
-                if self._replay_buffer.can_provide_samples():
+                if self._agent.replay_buffer.can_provide_samples():
                     self._train_with_replay_buffer(batch_size)
 
                 current_state = new_state
@@ -70,12 +86,6 @@ class Train:
                 if done:
                     self.log_episode(episode_idx, step_idx)
                     break
-
-    def _act(self, current_state):
-        action = self._actor.predict(
-            states_batch=np.array([current_state + self._actor_noise()]),
-        )[0]  # unpack actions batch of size 1
-        return action
 
     def log_episode(self, episode_idx, step_idx):
         summary_str = self._sess.run(self.summary_ops, feed_dict={
