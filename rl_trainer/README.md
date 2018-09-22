@@ -1,13 +1,15 @@
 # Run Parallel Rollouts
 ## Installation
 Setup the Python environment according to: https://github.com/stanfordnmbl/osim-rl
-## Running
-Use the ``orchestrator.py`` script to experiment and learn with your agent in parallel.
+## Experimentation
+Use the ``demo.py`` script to experiment with your agent.
 ```bash
-python -m rl_trainer.main
+python -m rl_trainer.demo
 ```
-The output will be saved in ```results_dir``` and any errors will be logged in 
-the ``logs`` file.
+An example of multi-core experiments is in the ``demo_parallel.py`` script.
+```bash
+python -m rl_trainer.demo_parallel
+```
 ## Test
 ```bash
 pytest

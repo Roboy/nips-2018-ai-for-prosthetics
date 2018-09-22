@@ -27,10 +27,10 @@ class Experiment:
     def run(self, seed: int = None):
         if seed:
             self._set_seeds(seed)
-        for ep_idx in range(self._num_episodes):
+        for idx in range(self._num_episodes):
             episode = self._rollout_one_episode()
             self._agent.observe_episode(episode)
-            self._log_episode(episode, ep_idx)
+            self._log_episode(episode, idx)
         print(f"Experiment {self._id} finished")
 
     def _rollout_one_episode(self) -> Episode:
