@@ -31,6 +31,10 @@ class ExperienceTuple(NamedTuple):
         )
 
 
+class Episode(NamedTuple):
+    experience_tuples: Collection[ExperienceTuple]
+
+
 class ExperienceTupleBatch:
     """
     Allows to access the list of attributes without constructing
@@ -54,7 +58,3 @@ class ExperienceTupleBatch:
 
     def __len__(self):
         return len(self.experience_tuples)
-
-
-class Episode(NamedTuple):
-    experience_tuples: Collection[ExperienceTuple]

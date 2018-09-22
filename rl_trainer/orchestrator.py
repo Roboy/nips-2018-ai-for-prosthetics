@@ -17,7 +17,7 @@ if __name__ == '__main__':
     assert not os.path.isdir(results_dir), f"Folder '{results_dir}' already exists"
 
     env = env_constructor()
-    agent = RandomAgent(action_space=env.action_space, state_space=env.observation_space)
+    agent = RandomAgent(action_space=env.action_space)
     trainer = ParallelTrainer(
         env_constructor=env_constructor,
         initial_agent=agent,

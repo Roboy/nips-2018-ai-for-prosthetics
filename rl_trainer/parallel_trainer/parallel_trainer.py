@@ -1,4 +1,4 @@
-from multiprocessing.pool import Pool, ThreadPool
+from multiprocessing.pool import ThreadPool
 from typing import List, Callable, NamedTuple
 
 import gym
@@ -46,7 +46,8 @@ class ParallelTrainer:
         episodes: List[Episode] = self._parallelize_experiments()
         print("Parallel experiment of {} complete.".format(self))
         self.episodes_history.extend(episodes)
-        self.current_agent.train(episodes)
+        for ep in episodes:
+            self.current_agent.observe_episode(ep)
         print("Training of {} complete".format(self.current_agent))
 
     def _parallelize_experiments(self) -> List[Episode]:
