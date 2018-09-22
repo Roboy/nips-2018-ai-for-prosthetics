@@ -13,5 +13,5 @@ class ReplayBuffer:
     def clear(self) -> None:
         raise NotImplementedError
 
-    def can_provide_samples(self) -> bool:
+    def has_sufficient_samples(self) -> bool:
         raise NotImplementedError

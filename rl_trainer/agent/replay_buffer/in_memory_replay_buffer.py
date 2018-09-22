@@ -32,7 +32,7 @@ class InMemoryReplayBuffer(ReplayBuffer):
     @typechecked
     def sample_batch(self, batch_size: int = None) -> ExperienceTupleBatch:
         batch_size = batch_size if batch_size is not None else self._batch_size
-        assert self.can_provide_samples(), "The buffer can not yet provide samples."
+        assert self.has_sufficient_samples(), "The buffer can not yet provide samples."
         batch_size = min(batch_size, len(self._buffer))
         exp_tuples = random.sample(self._buffer, batch_size)
         return ExperienceTupleBatch(experience_tuples=exp_tuples)
@@ -40,5 +40,5 @@ class InMemoryReplayBuffer(ReplayBuffer):
     def clear(self):
         self._buffer.clear()
 
-    def can_provide_samples(self) -> bool:
+    def has_sufficient_samples(self) -> bool:
         return len(self._buffer) >= self._lower_size_limit

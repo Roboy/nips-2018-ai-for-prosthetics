@@ -17,15 +17,15 @@ def test_construction():
 def test_lower_size_limit():
     buffer = InMemoryReplayBuffer(buffer_size=BUFFER_SIZE,
                                   lower_size_limit=LOWER_SIZE_LIMIT)
-    assert not buffer.can_provide_samples()
+    assert not buffer.has_sufficient_samples()
     buffer.extend([EXPERIENCE_TUPLE])
-    assert buffer.can_provide_samples()
+    assert buffer.has_sufficient_samples()
 
 
 def test_can_provide_samples():
     buffer = InMemoryReplayBuffer(buffer_size=BUFFER_SIZE,
                                   lower_size_limit=LOWER_SIZE_LIMIT)
-    assert not buffer.can_provide_samples()
+    assert not buffer.has_sufficient_samples()
     with pytest.raises(AssertionError):
         buffer.sample_batch(3)
 

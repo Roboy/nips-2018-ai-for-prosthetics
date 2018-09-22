@@ -45,14 +45,13 @@ def main(args, env: gym.Env):
             env = wrappers.Monitor(env, args['monitor_dir'], force=True)
 
         train = Train(
-            sess=sess,
             env=env,
-            tf_summary_dir=args['summary_dir'],
             agent=TFDDPGAgent(
                 actor=actor,
                 critic=critic,
                 replay_buffer=replay_buffer,
                 actor_noise=actor_noise,
+                sess=sess,
             )
         )
         train.train(
