@@ -14,7 +14,8 @@ class TFDDPGAgent:
 
     @typechecked
     def __init__(self, actor: Actor, critic: Critic,
-                 replay_buffer: ReplayBuffer, actor_noise: Callable, sess: tf.Session):
+                 replay_buffer: ReplayBuffer, actor_noise: Callable, sess: tf.Session, gamma: float):
+        self._gamma = gamma
         self._actor_noise = actor_noise
         self._replay_buffer = replay_buffer
         self._critic = critic
@@ -42,17 +43,15 @@ class TFDDPGAgent:
         self._train_actor(batch)
         self._update_target_nets()
 
-    def _train_critic(self, batch) -> None:
+    def _train_critic(self, batch: ExperienceTupleBatch) -> None:
         target_q_values = self._critic.predict_target(
             states_batch=np.array(batch.final_states),
             actions_batch=self._actor.predict_target(states_batch=batch.final_states),
         )
         q_values = []
         for target_q_value, exp_tuple in zip(target_q_values, batch.experience_tuples):
-            if exp_tuple.final_state_is_terminal:
-                q_values.append(exp_tuple.reward)
-            else:
-                q_values.append(exp_tuple.reward + self._critic.gamma * target_q_value)
+            done = exp_tuple.state_2_is_terminal
+            q_values.append(exp_tuple.reward + (1-done)*self._gamma*target_q_value)
         predicted_q_value, _ = self._critic.train(
             states_batch=np.array(batch.initial_states),
             actions_batch=np.array(batch.actions),

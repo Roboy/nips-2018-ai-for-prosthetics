@@ -1,11 +1,9 @@
 import os
 
-from rl_trainer.commons.experience_tuple import mock_experience_tuple, \
-    ExperienceTuple
-from rl_trainer.commons import Episode
+from rl_trainer.commons import ExperienceTuple, Episode
 from rl_trainer.episode_serializer import CSVEpisodeParser, CSVEpisodeSerializer
 
-EXPERIENCE_TUPLE = mock_experience_tuple(action_dim=3, state_dim=2)
+EXPERIENCE_TUPLE = ExperienceTuple.mock(action_dim=3, state_dim=2)
 
 
 def test_parser_construction():
@@ -22,11 +20,14 @@ def test_serializer_roundtrip():
     assert not os.path.exists(fname_with_postfix)
 
     episode = Episode([EXPERIENCE_TUPLE])
-    CSVEpisodeSerializer().serialize(episode=episode, out_fname=fname)
-    parsed_episode = CSVEpisodeParser().parse_episode(fname_with_postfix)
+    try:
+        CSVEpisodeSerializer().serialize(episode=episode, out_fname=fname)
+        parsed_episode = CSVEpisodeParser().parse_episode(fname_with_postfix)
 
-    assert parsed_episode == episode
-    os.remove(fname_with_postfix)
+        assert parsed_episode == episode
+    finally:
+        if os.path.exists(fname_with_postfix):
+            os.remove(fname_with_postfix)
 
 
 def test_parse():
@@ -35,11 +36,11 @@ def test_parse():
     parsed_episode = CSVEpisodeParser().parse_episode(fname)
 
     expected_episode = Episode([ExperienceTuple(
-        initial_state=[1.0, 1.0],
+        state_1=[1.0, 1.0],
         action=[0.6, 0.6, 0.6],
         reward=0.7,
-        final_state=[0.3, 0.3],
-        final_state_is_terminal=True,
+        state_2=[0.3, 0.3],
+        state_2_is_terminal=True,
     )])
 
     assert parsed_episode == expected_episode

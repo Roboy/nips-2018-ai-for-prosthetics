@@ -13,11 +13,11 @@ class CSVEpisodeParser:
             reader = csv.reader(file)
             for line in reader:
                 experience_tuple = ExperienceTuple(
-                    initial_state=self._parse_line(line[0]),
+                    state_1=self._parse_line(line[0]),
                     action=self._parse_line(line[1]),
                     reward=float(line[2]),
-                    final_state=self._parse_line(line[3]),
-                    final_state_is_terminal=line[4] == "True",
+                    state_2=self._parse_line(line[3]),
+                    state_2_is_terminal=line[4] == "True",
                 )
                 experience_tuples.append(experience_tuple)
         return Episode(experience_tuples=experience_tuples)

@@ -29,9 +29,9 @@ class Train:
                 action = self._agent.act(current_state)
                 new_state, reward, done, _ = self._env.step(action)
 
-                exp_tup = ExperienceTuple(initial_state=current_state, action=action,
-                                          reward=reward, final_state=new_state,
-                                          final_state_is_terminal=done)
+                exp_tup = ExperienceTuple(state_1=current_state, action=action,
+                                          reward=reward, state_2=new_state,
+                                          state_2_is_terminal=done)
                 experience_tuples.append(exp_tup)
 
                 current_state = new_state

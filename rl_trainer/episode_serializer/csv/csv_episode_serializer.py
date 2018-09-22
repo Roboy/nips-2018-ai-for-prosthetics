@@ -1,5 +1,5 @@
 import csv
-from typing import Sequence, List
+from typing import List, Collection
 
 from rl_trainer.commons import Episode
 
@@ -11,14 +11,14 @@ class CSVEpisodeSerializer:
             writer = csv.writer(file)
             for exp_tuple in episode.experience_tuples:
                 line = [
-                    self._format_line(exp_tuple.initial_state),
-                    self._format_line(exp_tuple.action),
+                    self._format_nums(exp_tuple.state_1),
+                    self._format_nums(exp_tuple.action),
                     f"{float(exp_tuple.reward):.6}",
-                    self._format_line(exp_tuple.final_state),
-                    str(exp_tuple.final_state_is_terminal),
+                    self._format_nums(exp_tuple.state_2),
+                    str(exp_tuple.state_2_is_terminal),
                 ]
                 writer.writerow(line)
 
     @staticmethod
-    def _format_line(line: Sequence[float]) -> List[str]:
-        return [f"{float(e):.6}" for e in line]
+    def _format_nums(nums: Collection[float]) -> List[str]:
+        return [f"{float(e):.6}" for e in nums]

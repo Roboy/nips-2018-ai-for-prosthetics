@@ -1,12 +1,11 @@
 import pytest
 
 from rl_trainer.agent.replay_buffer import InMemoryReplayBuffer
-from rl_trainer.commons import ExperienceTupleBatch
-from rl_trainer.commons.experience_tuple import mock_experience_tuple
+from rl_trainer.commons import ExperienceTupleBatch, ExperienceTuple
 
 BUFFER_SIZE = 10
 LOWER_SIZE_LIMIT = 1
-EXPERIENCE_TUPLE = mock_experience_tuple(action_dim=3, state_dim=4)
+EXPERIENCE_TUPLE = ExperienceTuple.mock(action_dim=3, state_dim=4)
 
 
 def test_construction():

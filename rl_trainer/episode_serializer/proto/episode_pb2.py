@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='episode.proto',
   package='rl_trainer',
   syntax='proto3',
-  serialized_pb=_b('\n\repisode.proto\x12\nrl_trainer\"~\n\x0f\x45xperienceTuple\x12\x15\n\rinitial_state\x18\x01 \x03(\x01\x12\x0e\n\x06\x61\x63tion\x18\x02 \x03(\x01\x12\x0e\n\x06reward\x18\x03 \x01(\x01\x12\x13\n\x0b\x66inal_state\x18\x04 \x03(\x01\x12\x1f\n\x17\x66inal_state_is_terminal\x18\x05 \x01(\x08\"A\n\x07\x45pisode\x12\x36\n\x11\x65xperience_tuples\x18\x01 \x03(\x0b\x32\x1b.rl_trainer.ExperienceTupleb\x06proto3')
+  serialized_pb=_b('\n\repisode.proto\x12\nrl_trainer\"p\n\x0f\x45xperienceTuple\x12\x0f\n\x07state_1\x18\x01 \x03(\x01\x12\x0e\n\x06\x61\x63tion\x18\x02 \x03(\x01\x12\x0e\n\x06reward\x18\x03 \x01(\x01\x12\x0f\n\x07state_2\x18\x04 \x03(\x01\x12\x1b\n\x13state_2_is_terminal\x18\x05 \x01(\x08\"A\n\x07\x45pisode\x12\x36\n\x11\x65xperience_tuples\x18\x01 \x03(\x0b\x32\x1b.rl_trainer.ExperienceTupleb\x06proto3')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -34,7 +34,7 @@ _EXPERIENCETUPLE = _descriptor.Descriptor(
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='initial_state', full_name='rl_trainer.ExperienceTuple.initial_state', index=0,
+      name='state_1', full_name='rl_trainer.ExperienceTuple.state_1', index=0,
       number=1, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
@@ -55,14 +55,14 @@ _EXPERIENCETUPLE = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='final_state', full_name='rl_trainer.ExperienceTuple.final_state', index=3,
+      name='state_2', full_name='rl_trainer.ExperienceTuple.state_2', index=3,
       number=4, type=1, cpp_type=5, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='final_state_is_terminal', full_name='rl_trainer.ExperienceTuple.final_state_is_terminal', index=4,
+      name='state_2_is_terminal', full_name='rl_trainer.ExperienceTuple.state_2_is_terminal', index=4,
       number=5, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
@@ -81,7 +81,7 @@ _EXPERIENCETUPLE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=29,
-  serialized_end=155,
+  serialized_end=141,
 )
 
 
@@ -111,8 +111,8 @@ _EPISODE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=157,
-  serialized_end=222,
+  serialized_start=143,
+  serialized_end=208,
 )
 
 _EPISODE.fields_by_name['experience_tuples'].message_type = _EXPERIENCETUPLE

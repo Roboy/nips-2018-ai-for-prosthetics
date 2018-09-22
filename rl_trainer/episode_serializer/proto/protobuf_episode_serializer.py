@@ -3,7 +3,6 @@ import os
 from rl_trainer.episode_serializer.proto import episode_pb2
 from typeguard import typechecked
 
-from rl_trainer.commons.experience_tuple import mock_experience_tuple
 from rl_trainer.commons import Episode, ExperienceTuple
 from rl_trainer.episode_serializer.episode_serializer import EpisodeSerializer, EpisodeParser
 
@@ -28,32 +27,22 @@ class ProtobufEpisodeSerializer(EpisodeSerializer, EpisodeParser):
         with open(output_fname, "wb") as file:
             file.write(pb_episode.SerializeToString())
 
-
     @staticmethod
     def _to_exp_tuple(pb_exp_tuple: episode_pb2.ExperienceTuple) -> ExperienceTuple:
         return ExperienceTuple(
-            initial_state=pb_exp_tuple.initial_state,
+            state_1=pb_exp_tuple.state_1,
             action=pb_exp_tuple.action,
             reward=pb_exp_tuple.reward,
-            final_state=pb_exp_tuple.final_state,
-            final_state_is_terminal=pb_exp_tuple.final_state_is_terminal,
+            state_2=pb_exp_tuple.state_2,
+            state_2_is_terminal=pb_exp_tuple.state_2_is_terminal,
         )
 
     @staticmethod
     def _to_pb_exp_tuple(exp_tuple: ExperienceTuple) -> episode_pb2.ExperienceTuple:
         pb_exp_tuple = episode_pb2.ExperienceTuple()
-        pb_exp_tuple.initial_state.extend(exp_tuple.initial_state)
+        pb_exp_tuple.state_1.extend(exp_tuple.state_1)
         pb_exp_tuple.action.extend(exp_tuple.action)
         pb_exp_tuple.reward = exp_tuple.reward
-        pb_exp_tuple.final_state.extend(exp_tuple.final_state)
-        pb_exp_tuple.final_state_is_terminal = exp_tuple.final_state_is_terminal
+        pb_exp_tuple.state_2.extend(exp_tuple.state_2)
+        pb_exp_tuple.state_2_is_terminal = exp_tuple.state_2_is_terminal
         return pb_exp_tuple
-
-
-if __name__ == '__main__':
-    exp_tup = mock_experience_tuple(action_dim=4, state_dim=5)
-    serializer = ProtobufEpisodeSerializer()
-    fname = "ser.pb"
-    serializer.serialize(episode=Episode([exp_tup]), output_fname=fname)
-    episode = serializer.parse(episode_fname=fname)
-    print(episode)

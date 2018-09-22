@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List
 
 import gym
 
@@ -33,11 +33,11 @@ class Experiment:
     def _process_step(self, step: tuple, action):
         final_state, reward, self._done, info = step
         exp_tuple = ExperienceTuple(
-            initial_state=self._current_state,
+            state_1=self._current_state,
             action=action,
             reward=reward,
-            final_state=final_state,
-            final_state_is_terminal=self._done,
+            state_2=final_state,
+            state_2_is_terminal=self._done,
         )
         self._experience_tuples.append(exp_tuple)
         self._current_state = final_state

@@ -8,8 +8,8 @@ from osim.env import ProstheticsEnv
 from rl_trainer.agent.replay_buffer import InMemoryReplayBuffer
 from rl_trainer.ddpg_impl.flower.action_noise import OrnsteinUhlenbeckActionNoise
 from rl_trainer.ddpg_impl.flower.args_parser import setup_args_parser
-from rl_trainer.ddpg_impl.flower.actor_critic import Actor, Critic
-from rl_trainer.ddpg_impl.flower.train import Train, TFDDPGAgent
+from rl_trainer.ddpg_impl.flower.actor_critic import Actor, Critic, TFDDPGAgent
+from rl_trainer.ddpg_impl.flower.train import Train
 
 
 def main(args, env: gym.Env):
@@ -32,7 +32,6 @@ def main(args, env: gym.Env):
 
         critic = Critic(sess, state_dim, action_dim,
                         float(args['critic_lr']), float(args['tau']),
-                        float(args['gamma']),
                         actor.num_trainable_vars)
 
         actor_noise = OrnsteinUhlenbeckActionNoise(mu=np.zeros(action_dim))
@@ -52,6 +51,7 @@ def main(args, env: gym.Env):
                 replay_buffer=replay_buffer,
                 actor_noise=actor_noise,
                 sess=sess,
+                gamma=float(args['gamma']),
             )
         )
         train.train(
