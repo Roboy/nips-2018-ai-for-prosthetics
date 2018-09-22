@@ -11,12 +11,7 @@ class Train:
         self._env = env
 
     def train(self, num_episodes: int, max_episode_len: int, render_env: bool):
-        # Needed to enable BatchNorm.
-        # This hurts the performance on Pendulum but could be useful
-        # in other environments.
-
         for episode_idx in range(num_episodes):
-
             experience_tuples = []
             episode_reward = 0
 
@@ -33,10 +28,8 @@ class Train:
                                           reward=reward, state_2=new_state,
                                           state_2_is_terminal=done)
                 experience_tuples.append(exp_tup)
-
                 current_state = new_state
                 episode_reward += reward
-
                 if done:
                     self._agent.observe_episode(Episode(experience_tuples))
                     self.log_episode(episode_idx, episode_reward)
