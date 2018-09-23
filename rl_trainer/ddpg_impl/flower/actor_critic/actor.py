@@ -7,8 +7,10 @@ import numpy as np
 class TFPolicyNetwork:
 
     @typechecked
-    def __init__(self, state_dim: int, action_dim: int, action_bound: np.ndarray):
+    def __init__(self, sess: tf.Session, state_dim: int, action_dim: int,
+                 action_bound: np.ndarray):
         assert len(action_bound) == action_dim
+        self._sess = sess
         existing_vars = tf.trainable_variables()
         self.state_ph = tflearn.input_data(shape=[None, state_dim])
         self.action_output = self._construct_nn(action_bound, action_dim)
@@ -28,6 +30,11 @@ class TFPolicyNetwork:
         # Scale output to -action_bound to action_bound
         return tf.multiply(action_output, action_bound)
 
+    def predict(self, states_batch):
+        return self._sess.run(self.action_output, feed_dict={
+            self.state_ph: states_batch
+        })
+
 
 class Actor:
     """
@@ -41,11 +48,11 @@ class Actor:
     def __init__(self, sess, state_dim, action_dim, action_bound, learning_rate, tau, batch_size):
         self._sess = sess
 
-        self._online_nn = TFPolicyNetwork(state_dim, action_dim, action_bound)
+        self._online_nn = TFPolicyNetwork(sess, state_dim, action_dim, action_bound)
         self._critic_provided_action_grads = tf.placeholder(tf.float32, [None, action_dim])
         self._online_nn_train_op = self._setup_online_nn_train_op(learning_rate, batch_size)
 
-        self._target_nn = TFPolicyNetwork(state_dim, action_dim, action_bound)
+        self._target_nn = TFPolicyNetwork(sess, state_dim, action_dim, action_bound)
         self._target_nn_update_ops = self._setup_target_nn_update_ops(tau)
 
         self.num_trainable_vars = len(self._target_nn.variables + self._online_nn.variables)
@@ -62,25 +69,6 @@ class Actor:
         return adam.apply_gradients(
             grads_and_vars=zip(actor_gradients, self._online_nn.variables))
 
-    def train(self, states_batch, action_grads_batch):
-        self._sess.run(self._online_nn_train_op, feed_dict={
-            self._online_nn.state_ph: states_batch,
-            self._critic_provided_action_grads: action_grads_batch
-        })
-
-    def predict(self, states_batch):
-        return self._sess.run(self._online_nn.action_output, feed_dict={
-            self._online_nn.state_ph: states_batch
-        })
-
-    def predict_target(self, states_batch):
-        return self._sess.run(self._target_nn.action_output, feed_dict={
-            self._target_nn.state_ph: states_batch
-        })
-
-    def update_target_network(self):
-        self._sess.run(self._target_nn_update_ops)
-
     @typechecked
     def _setup_target_nn_update_ops(self, tau: float):
         update_ops = []
@@ -88,3 +76,18 @@ class Actor:
             new_target_var = (1-tau)*target_var + tau*running_var
             update_ops.append(target_var.assign(new_target_var))
         return update_ops
+
+    def train(self, states_batch, action_grads_batch):
+        self._sess.run(self._online_nn_train_op, feed_dict={
+            self._online_nn.state_ph: states_batch,
+            self._critic_provided_action_grads: action_grads_batch
+        })
+
+    def predict(self, states_batch):
+        return self._online_nn.predict(states_batch)
+
+    def predict_target(self, states_batch):
+        return self._target_nn.predict(states_batch)
+
+    def update_target_network(self):
+        self._sess.run(self._target_nn_update_ops)
