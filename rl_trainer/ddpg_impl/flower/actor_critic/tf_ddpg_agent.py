@@ -54,7 +54,7 @@ class TFDDPGAgent:
 
     def _update_target_nets(self):
         self._actor.target_nn_update()
-        self._critic.target_nn_update()
+        self._critic.target_nn.update()
 
     def _train(self):
         tflearn.is_training(True)
