@@ -10,9 +10,9 @@ def test_experience_tuple_batch():
     assert len(batch) == 2
 
 
-def test_initial_states():
-    assert len(batch.initial_states) is 2
-    for state in batch.initial_states:
+def test_states_1():
+    assert len(batch.states_1) is 2
+    for state in batch.states_1:
         assert np.array_equal(state, EXPERIENCE_TUPLE.state_1)
 
 
@@ -28,13 +28,13 @@ def test_rewards():
         assert reward == EXPERIENCE_TUPLE.reward
 
 
-def test_final_states():
-    assert len(batch.final_states) is 2
-    for state in batch.final_states:
+def test_states_2():
+    assert len(batch.states_2) is 2
+    for state in batch.states_2:
         assert np.array_equal(state, EXPERIENCE_TUPLE.state_2)
 
 
-def test_final_states_are_terminal():
-    assert len(batch.final_states_are_terminal) is 2
-    for done in batch.final_states_are_terminal:
+def test_states_2_are_terminal():
+    assert len(batch.states_2_are_terminal) is 2
+    for done in batch.states_2_are_terminal:
         assert done is EXPERIENCE_TUPLE.state_2_is_terminal

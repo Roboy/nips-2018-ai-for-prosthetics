@@ -38,7 +38,7 @@ class Episode(NamedTuple):
 class ExperienceTupleBatch:
     """
     Allows to access the list of attributes without constructing
-    them explicitly. For example: state_batch = batch.initial_states
+    them explicitly. For example: state_batch = batch.states_1
     """
 
     @typechecked
@@ -49,11 +49,11 @@ class ExperienceTupleBatch:
     def _init(self):
         gen = ((e.state_1, e.action, e.reward, e.state_2, e.state_2_is_terminal) for e in self.experience_tuples)
         (
-            self.initial_states,
+            self.states_1,
             self.actions,
             self.rewards,
-            self.final_states,
-            self.final_states_are_terminal,
+            self.states_2,
+            self.states_2_are_terminal,
         ) = zip(*gen)
 
     def __len__(self):
