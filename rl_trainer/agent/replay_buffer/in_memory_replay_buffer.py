@@ -14,8 +14,8 @@ class InMemoryReplayBuffer(ReplayBuffer):
     """
 
     @typechecked
-    def __init__(self, buffer_size: int, lower_size_limit: int,
-                 seed: int = None, batch_size: int = 64):
+    def __init__(self, lower_size_limit: int = 64, seed: int = None,
+                 batch_size: int = 64, buffer_size: int = 10000):
         if seed is not None:
             random.seed(seed)
         self._batch_size = batch_size

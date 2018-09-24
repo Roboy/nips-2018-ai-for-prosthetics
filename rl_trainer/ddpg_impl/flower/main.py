@@ -20,24 +20,8 @@ def main(args, env: gym.Env):
         tf.set_random_seed(seed)
         env.seed(seed)
 
-        state_dim = env.observation_space.shape[0]
-        action_dim = env.action_space.shape[0]
-        action_bound = env.action_space.high
         # Ensure action bound is symmetric
         # assert (env.action_space.high == -env.action_space.low)
-
-        actor = Actor(sess, state_dim, action_dim, action_bound,
-                      float(args['actor_lr']), float(args['tau']),
-                      int(args['minibatch_size']))
-
-        critic = Critic(sess, state_dim, action_dim,
-                        float(args['critic_lr']), float(args['tau']))
-
-        actor_noise = OrnsteinUhlenbeckActionNoise(mu=np.zeros(action_dim))
-
-        replay_buffer = InMemoryReplayBuffer(buffer_size=int(args["buffer_size"]),
-                                             lower_size_limit=int(args["minibatch_size"]),
-                                             seed=int(args["random_seed"]))
 
         if args["use_gym_monitor"]:
             env = wrappers.Monitor(env, args['monitor_dir'], force=True)
@@ -45,10 +29,8 @@ def main(args, env: gym.Env):
         train = Train(
             env=env,
             agent=TFDDPGAgent(
-                actor=actor,
-                critic=critic,
-                replay_buffer=replay_buffer,
-                actor_noise=actor_noise,
+                state_dim=env.observation_space.shape[0],
+                action_space=env.action_space,
                 sess=sess,
                 gamma=float(args['gamma']),
             )

@@ -45,7 +45,10 @@ class Actor:
     between -action_bound and action_bound
     """
 
-    def __init__(self, sess, state_dim, action_dim, action_bound, learning_rate, tau, batch_size):
+    @typechecked
+    def __init__(self, sess: tf.Session, state_dim: int, action_dim: int,
+                 action_bound, batch_size: int = 64,
+                 learning_rate: float = 1e-4, tau: float = 0.001):
         self._sess = sess
 
         self._online_nn = TFPolicyNetwork(sess, state_dim, action_dim, action_bound)
