@@ -31,8 +31,7 @@ def main(args, env: gym.Env):
                       int(args['minibatch_size']))
 
         critic = Critic(sess, state_dim, action_dim,
-                        float(args['critic_lr']), float(args['tau']),
-                        actor.num_trainable_vars)
+                        float(args['critic_lr']), float(args['tau']))
 
         actor_noise = OrnsteinUhlenbeckActionNoise(mu=np.zeros(action_dim))
 

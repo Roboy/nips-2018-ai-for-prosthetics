@@ -29,12 +29,12 @@ class TFDDPGAgent:
         if self._replay_buffer.has_sufficient_samples():
             self._train()
         tflearn.is_training(False)
-        action = self._actor.predict(states_batch=np.array([current_state]))
+        action = self._actor.online_nn_predict(states_batch=np.array([current_state]))
         return action[0] + self._actor_noise()  # unpack tf batch shape
 
     def _update_target_nets(self):
-        self._actor.update_target_network()
-        self._critic.update_target_network()
+        self._actor.target_nn_update()
+        self._critic.target_nn_update()
 
     def _train(self):
         tflearn.is_training(True)
@@ -44,15 +44,15 @@ class TFDDPGAgent:
         self._update_target_nets()
 
     def _train_critic(self, batch: ExperienceTupleBatch) -> None:
-        target_q_values = self._critic.predict_target(
+        target_q_values = self._critic.target_nn_predict(
             states_batch=np.array(batch.final_states),
-            actions_batch=self._actor.predict_target(states_batch=batch.final_states),
+            actions_batch=self._actor.target_nn_predict(states_batch=batch.final_states),
         )
         q_values = []
         for target_q_value, exp_tuple in zip(target_q_values, batch.experience_tuples):
             done = exp_tuple.state_2_is_terminal
             q_values.append(exp_tuple.reward + (1-done)*self._gamma*target_q_value)
-        predicted_q_value, _ = self._critic.train(
+        predicted_q_value, _ = self._critic.online_nn_train(
             states_batch=np.array(batch.initial_states),
             actions_batch=np.array(batch.actions),
             q_values_batch=np.array(q_values).reshape((-1, 1)),
@@ -62,11 +62,11 @@ class TFDDPGAgent:
     def _train_actor(self, batch: ExperienceTupleBatch) -> None:
         """Update the actor policy using the sampled gradient"""
         initial_states = np.array(batch.initial_states)
-        actions_batch = self._actor.predict(states_batch=initial_states)
-        action_grads_batch = self._critic.action_gradients(states_batch=initial_states,
-                                                           actions_batch=actions_batch)
-        self._actor.train(states_batch=initial_states,
-                          action_grads_batch=action_grads_batch[0])
+        actions_batch = self._actor.online_nn_predict(states_batch=initial_states)
+        action_grads_batch = self._critic.online_nn_action_gradients(states_batch=initial_states,
+                                                                     actions_batch=actions_batch)
+        self._actor.online_nn_train(states_batch=initial_states,
+                                    action_grads_batch=action_grads_batch[0])
 
     def _log_max_q(self, predicted_q_value):
         self.episode_max_q = np.amax(predicted_q_value)
