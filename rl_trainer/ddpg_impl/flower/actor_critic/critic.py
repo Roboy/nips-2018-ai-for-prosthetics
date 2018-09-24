@@ -29,7 +29,7 @@ class TFQNetwork:
         w_init = tflearn.initializations.uniform(minval=-0.003, maxval=0.003)
         return tflearn.fully_connected(net, 1, weights_init=w_init)
 
-    def predict(self, states_batch, actions_batch):
+    def predict_q(self, states_batch, actions_batch):
         return self._sess.run(self._q_value_pred, feed_dict={
             self._state_ph: states_batch,
             self._action_ph: actions_batch,
@@ -80,16 +80,6 @@ class Critic:
             self.online_nn._action_ph: actions_batch,
             self._q_value_ph: q_values_batch
         })
-
-    def online_nn_predict(self, states_batch, actions_batch):
-        return self.sess.run(self.online_nn._q_value_pred, feed_dict={
-            self.online_nn._state_ph: states_batch,
-            self.online_nn._action_ph: actions_batch
-        })
-
-    def target_nn_predict(self, states_batch, actions_batch):
-        return self.target_nn.predict(states_batch=states_batch,
-                                      actions_batch=actions_batch)
 
     def online_nn_action_gradients(self, states_batch, actions_batch):
         return self.sess.run(self._online_nn_action_grads, feed_dict={

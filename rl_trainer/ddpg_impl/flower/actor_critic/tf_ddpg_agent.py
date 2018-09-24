@@ -49,7 +49,7 @@ class TFDDPGAgent:
         if self._replay_buffer.has_sufficient_samples():
             self._train()
         tflearn.is_training(False)
-        action = self._actor._online_nn.predict(states_batch=np.array([current_state]))
+        action = self._actor.online_nn.act(states_batch=np.array([current_state]))
         return action[0] + self._actor_noise()  # unpack tf batch shape
 
     def _update_target_nets(self):
@@ -65,9 +65,9 @@ class TFDDPGAgent:
 
     @typechecked
     def _train_critic(self, batch: ExperienceTupleBatch) -> None:
-        states_2_q_vals = self._critic.target_nn.predict(
+        states_2_q_vals = self._critic.target_nn.predict_q(
             states_batch=np.array(batch.states_2),
-            actions_batch=self._actor.target_nn_predict(states_batch=batch.states_2),
+            actions_batch=self._actor.target_nn.act(states_batch=batch.states_2),
         )
 
         q_values = []
@@ -87,15 +87,16 @@ class TFDDPGAgent:
     def _train_actor(self, batch: ExperienceTupleBatch) -> None:
         """Update the actor policy using the sampled gradient"""
         states_1 = np.array(batch.states_1)
-        actions_batch = self._actor.online_nn_predict(states_batch=states_1)
-        action_grads_batch = self._critic.online_nn_action_gradients(states_batch=states_1,
-                                                                     actions_batch=actions_batch)
+        actions_batch = self._actor.online_nn.act(states_batch=states_1)
+        action_grads_batch = self._critic.online_nn_action_gradients(
+            states_batch=states_1, actions_batch=actions_batch)
+        # TODO: Understand why the action_grads_batch is being unpacked below
         self._actor.online_nn_train(states_batch=states_1,
                                     action_grads_batch=action_grads_batch[0])
 
     @typechecked
     def _log_max_q(self, batch: ExperienceTupleBatch):
-        states_1_q_vals = self._critic.online_nn.predict(
+        states_1_q_vals = self._critic.online_nn.predict_q(
             states_batch=batch.states_1, actions_batch=batch.actions)
         self.episode_max_q = np.amax(states_1_q_vals)
 
