@@ -18,9 +18,9 @@ class TensorFlowNetwork:
         raise NotImplementedError
 
 
-class TensorFlowTargetNetwork(TensorFlowNetwork):
+class TargetNetwork(TensorFlowNetwork):
     def __init__(self, online_nn_vars: Collection[tf.Variable], tau: float, **kwargs):
-        super(TensorFlowTargetNetwork, self).__init__(**kwargs)
+        super(TargetNetwork, self).__init__(**kwargs)
         self._target_nn_update_ops = self._setup_target_nn_update_ops(
             online_vars=online_nn_vars, tau=tau)
 
@@ -36,5 +36,5 @@ class TensorFlowTargetNetwork(TensorFlowNetwork):
 
 
 class OnlineNetwork:
-    def create_target_network(self, tau: float) -> TensorFlowTargetNetwork:
+    def create_target_network(self, tau: float) -> TargetNetwork:
         raise NotImplementedError

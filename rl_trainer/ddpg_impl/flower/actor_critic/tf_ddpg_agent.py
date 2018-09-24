@@ -53,7 +53,7 @@ class TFDDPGAgent:
         return action[0] + self._actor_noise()  # unpack tf batch shape
 
     def _update_target_nets(self):
-        self._actor.target_nn_update()
+        self._actor.target_nn.update()
         self._critic.target_nn.update()
 
     def _train(self):
@@ -75,10 +75,10 @@ class TFDDPGAgent:
         for state_2_q_val, reward, done in triplets:
             q_values.append(reward + (1-done)*self._gamma*state_2_q_val)
 
-        self._critic.online_nn_train(
+        self._critic.online_nn.train(
             states_batch=np.array(batch.states_1),
             actions_batch=np.array(batch.actions),
-            q_values_batch=np.array(q_values).reshape((-1, 1)),
+            actual_q_vals=np.array(q_values).reshape((-1, 1)),
         )
 
         self._log_max_q(batch=batch)
@@ -88,7 +88,7 @@ class TFDDPGAgent:
         """Update the actor policy using the sampled gradient"""
         states_1 = np.array(batch.states_1)
         actions_batch = self._actor.online_nn.act(states_batch=states_1)
-        action_grads_batch = self._critic.online_nn_action_gradients(
+        action_grads_batch = self._critic.online_nn.action_grads(
             states_batch=states_1, actions_batch=actions_batch)
         # TODO: Understand why the action_grads_batch is being unpacked below
         self._actor.online_nn_train(states_batch=states_1,
