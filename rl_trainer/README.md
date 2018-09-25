@@ -10,11 +10,8 @@ An example of multi-core experiments is in the ``demo_parallel.py`` script.
 ```bash
 python -m rl_trainer.demo_parallel
 ```
-## Test
-```bash
-pytest
-```
-or from the ``rl_trainer/tests`` folder:
-```bash
-pytest --integration
-```
+## Run tests
+From the ``rl_trainer/`` folder, run in the shell:
+* Unit tests: ```pytest```
+* Integration tests: ```pytest --integration```
+* All tests: ```pytest --all```

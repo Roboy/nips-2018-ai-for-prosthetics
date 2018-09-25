@@ -10,6 +10,7 @@ from typeguard import typechecked
 from rl_trainer.agent import GymAgent
 from rl_trainer.agent.replay_buffer import ReplayBuffer, InMemoryReplayBuffer
 from rl_trainer.commons import Episode, ExperienceTupleBatch
+from rl_trainer.ddpg_impl.flower.actor_critic.tf_model_saver import TFModelSaver
 from .action_noise import OrnsteinUhlenbeckActionNoise
 from .critic import OnlineCriticNetwork
 from .actor import OnlineActorNetwork
@@ -20,8 +21,10 @@ class TensorFlowDDPGAgent(GymAgent):
     def __init__(self, state_dim: int, action_space: gym.spaces.Box, sess: tf.Session = None,
                  gamma: float = 0.99, replay_buffer: ReplayBuffer = None,
                  actor_noise: Callable = None, tau: float = 0.001,
-                 critic_nn: OnlineCriticNetwork = None, actor_nn: OnlineActorNetwork = None):
+                 critic_nn: OnlineCriticNetwork = None, actor_nn: OnlineActorNetwork = None,
+                 tf_model_saver: TFModelSaver = None):
 
+        self._model_saver = tf_model_saver if tf_model_saver else TFModelSaver()
         action_dim = action_space.shape[0]
         self._gamma = gamma
 
@@ -103,6 +106,8 @@ class TensorFlowDDPGAgent(GymAgent):
     @overrides
     def observe_episode(self, episode: Episode):
         self._replay_buffer.extend(episode.experience_tuples)
+        self._model_saver.step(self._sess)
 
+    @overrides
     def set_seed(self, seed: int):
         tf.set_random_seed(seed)

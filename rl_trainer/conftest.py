@@ -4,11 +4,14 @@ import pytest
 def pytest_addoption(parser):
     parser.addoption("--integration", action="store_true",
                      default=False, help="run integration tests")
+    parser.addoption("--all", action="store_true", default=False, help="run all tests")
 
 
 def pytest_collection_modifyitems(config, items):
-    collected_tests = items
+    if config.getoption("--all"):
+        return
 
+    collected_tests = items
     if config.getoption("--integration"):
         skip_marker = pytest.mark.skip(reason="running only integration tests")
         tests_to_skip = [t for t in collected_tests if "integration" not in t.keywords]
