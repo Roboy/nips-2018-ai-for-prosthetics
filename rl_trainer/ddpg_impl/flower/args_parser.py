@@ -1,5 +1,6 @@
 import argparse
 import os
+import pprint as pp
 
 RESULTS_DIR = "./flower_results"
 
@@ -29,3 +30,10 @@ def setup_args_parser() -> argparse.ArgumentParser:
     parser.set_defaults(use_gym_monitor=False)
 
     return parser
+
+
+if __name__ == '__main__':
+    """Demo"""
+    parser = setup_args_parser()
+    args = vars(parser.parse_args())
+    pp.pprint(args)

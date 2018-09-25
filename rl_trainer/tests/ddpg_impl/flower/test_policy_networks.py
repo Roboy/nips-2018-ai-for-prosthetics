@@ -24,17 +24,3 @@ def test_construction_of_target_nn():
         online_nn = OnlinePolicyNetwork(action_bound=np.ones(3), sess=sess, state_dim=2, action_dim=3)
         target_nn = online_nn.create_target_network(tau=0.5)
         assert isinstance(target_nn, TargetNetwork)
-
-
-def test_target_nn_update_op():
-    with tf.Session() as sess:
-        online_net = OnlinePolicyNetwork(action_bound=np.ones(3), sess=sess, state_dim=2, action_dim=3)
-        target_net = online_net.create_target_network(tau=0.5)
-        sess.run(tf.global_variables_initializer())
-
-        vars_before_update = [var.eval(sess) for var in target_net._variables]
-        target_net.update()
-        vars_after_update = [var.eval(sess) for var in target_net._variables]
-
-        for before, after in zip(vars_before_update, vars_after_update):
-            assert not np.array_equal(before, after)

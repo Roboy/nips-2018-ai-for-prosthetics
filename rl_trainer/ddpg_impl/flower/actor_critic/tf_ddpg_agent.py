@@ -4,18 +4,19 @@ from typing import Callable, Collection
 
 import tensorflow as tf
 import tflearn
+from overrides import overrides
 from typeguard import typechecked
 
+from rl_trainer.agent import GymAgent
 from rl_trainer.agent.replay_buffer import ReplayBuffer, InMemoryReplayBuffer
 from rl_trainer.commons import Episode, ExperienceTupleBatch
 from rl_trainer.ddpg_impl.flower.action_noise import OrnsteinUhlenbeckActionNoise
 from . import Actor, Critic
 
 
-class TFDDPGAgent:
+class TFDDPGAgent(GymAgent):
 
-    @typechecked
-    def __init__(self, sess: tf.Session, state_dim: int, action_space: gym.spaces.Box,
+    def __init__(self, state_dim: int, action_space: gym.spaces.Box, sess: tf.Session = None,
                  gamma: float = 0.99, replay_buffer: ReplayBuffer = None,
                  actor_noise: Callable = None, actor: Actor = None, critic: Critic = None):
 
@@ -23,19 +24,19 @@ class TFDDPGAgent:
         action_bound = action_space.high
         self._gamma = gamma
 
-        sess = sess if sess else tf.Session()
+        self._sess = sess if sess else tf.Session()
         self._critic = critic if critic else Critic(
-            sess=sess,
+            sess=self._sess,
             state_dim=state_dim,
             action_dim=action_dim
         )
         self._actor = actor if actor else Actor(
-            sess=sess,
+            sess=self._sess,
             state_dim=state_dim,
             action_dim=action_dim,
             action_bound=action_bound
         )
-        sess.run(tf.global_variables_initializer())
+        self._sess.run(tf.global_variables_initializer())
 
         self._actor_noise = actor_noise if actor_noise else OrnsteinUhlenbeckActionNoise(
             mu=np.zeros(action_dim))
@@ -45,10 +46,11 @@ class TFDDPGAgent:
         self._update_target_nets()
 
     @typechecked
+    @overrides
     def act(self, current_state: Collection[float]):
         if self._replay_buffer.has_sufficient_samples():
             self._train()
-        tflearn.is_training(False)
+        tflearn.is_training(False, session=self._sess)
         action = self._actor.online_nn.act(states_batch=np.array([current_state]))
         return action[0] + self._actor_noise()  # unpack tf batch shape
 
@@ -57,7 +59,7 @@ class TFDDPGAgent:
         self._critic.target_nn.update()
 
     def _train(self):
-        tflearn.is_training(True)
+        tflearn.is_training(True, session=self._sess)
         batch = self._replay_buffer.sample_batch()
         self._train_critic(batch)
         self._train_actor(batch)
@@ -101,5 +103,9 @@ class TFDDPGAgent:
         self.episode_max_q = np.amax(states_1_q_vals)
 
     @typechecked
+    @overrides
     def observe_episode(self, episode: Episode):
         self._replay_buffer.extend(episode.experience_tuples)
+
+    def set_seed(self, seed: int):
+        tf.set_random_seed(seed)

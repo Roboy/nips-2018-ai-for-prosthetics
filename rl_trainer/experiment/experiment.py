@@ -13,7 +13,6 @@ class Experiment:
     results into a list of episodes.
     """
 
-    @typechecked
     def __init__(self, agent: GymAgent, env: gym.Env, render_env: bool = False,
                  num_episodes: int = 1, max_episode_len=int(1e5)):
         self._id = uuid.uuid4()
@@ -37,6 +36,8 @@ class Experiment:
         experience_tuples = []
         current_state = self._env.reset()
         for idx in range(self._max_episode_len):
+            if self._render_env:
+                self._env.render()
             action = self._agent.act(current_state)
             new_state, reward, done, info = self._env.step(action)
             exp_tuple = ExperienceTuple(
@@ -57,5 +58,5 @@ class Experiment:
 
     def _log_episode(self, episode: Episode, episode_num: int):
         episode_reward = sum(tup.reward for tup in episode.experience_tuples)
-        print(f"| Experiment: {self._id} | Reward: {episode_reward} "
+        print(f"| Experiment: {self._id} | Reward: {int(episode_reward)} "
               f"| Episode: {episode_num} |")

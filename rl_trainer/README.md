@@ -14,3 +14,7 @@ python -m rl_trainer.demo_parallel
 ```bash
 pytest
 ```
+or from the ``rl_trainer/tests`` folder:
+```bash
+pytest --integration
+```

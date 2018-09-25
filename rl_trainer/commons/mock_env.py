@@ -1,13 +1,14 @@
 import numpy as np
 
 import gym
+from gym.spaces import Box
 from typeguard import typechecked
 
 
-class MockSpace(gym.Space):
+class MockSpace(Box):
 
     def __init__(self, size: int):
-        super().__init__(shape=(size,))
+        super(MockSpace, self).__init__(low=np.zeros(size), high=np.ones(size))
         self.high = np.ones(size)
         self.low = np.zeros(size)
 

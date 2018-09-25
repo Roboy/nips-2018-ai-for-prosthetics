@@ -9,3 +9,6 @@ class GymAgent:
 
     def observe_episode(self, episode: Episode):
         raise NotImplementedError
+
+    def set_seed(self, seed: int):
+        raise NotImplementedError
