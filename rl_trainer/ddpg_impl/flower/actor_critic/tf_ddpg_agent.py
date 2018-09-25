@@ -10,11 +10,12 @@ from typeguard import typechecked
 from rl_trainer.agent import GymAgent
 from rl_trainer.agent.replay_buffer import ReplayBuffer, InMemoryReplayBuffer
 from rl_trainer.commons import Episode, ExperienceTupleBatch
-from rl_trainer.ddpg_impl.flower.action_noise import OrnsteinUhlenbeckActionNoise
-from . import Actor, Critic
+from .action_noise import OrnsteinUhlenbeckActionNoise
+from .actor import Actor
+from .critic import Critic
 
 
-class TFDDPGAgent(GymAgent):
+class TensorFlowDDPGAgent(GymAgent):
 
     def __init__(self, state_dim: int, action_space: gym.spaces.Box, sess: tf.Session = None,
                  gamma: float = 0.99, replay_buffer: ReplayBuffer = None,
@@ -51,12 +52,12 @@ class TFDDPGAgent(GymAgent):
         if self._replay_buffer.has_sufficient_samples():
             self._train()
         tflearn.is_training(False, session=self._sess)
-        action = self._actor.online_nn.act(states_batch=np.array([current_state]))
+        action = self._actor.μ(s=np.array([current_state]))
         return action[0] + self._actor_noise()  # unpack tf batch shape
 
     def _update_target_nets(self):
-        self._actor.target_nn.update()
-        self._critic.target_nn.update()
+        self._actor.μʹ.update()
+        self._critic.Qʹ.update()
 
     def _train(self):
         tflearn.is_training(True, session=self._sess)
@@ -67,40 +68,36 @@ class TFDDPGAgent(GymAgent):
 
     @typechecked
     def _train_critic(self, batch: ExperienceTupleBatch) -> None:
-        states_2_q_vals = self._critic.target_nn.predict_q(
-            states_batch=np.array(batch.states_2),
-            actions_batch=self._actor.target_nn.act(states_batch=batch.states_2),
-        )
+        μʹ = self._actor.μʹ
+        Qʹ = self._critic.Qʹ
+        γ = self._gamma
+        s2 = np.array(batch.states_2)
+        dones = batch.states_2_are_terminal
 
-        q_values = []
-        triplets = zip(states_2_q_vals, batch.rewards, batch.states_2_are_terminal)
-        for state_2_q_val, reward, done in triplets:
-            q_values.append(reward + (1-done)*self._gamma*state_2_q_val)
+        Qs_s2 = Qʹ(s=s2, a=μʹ(s=s2))
+        yᵢ = [(r + (1-done)*γ*Q_s2) for r, done, Q_s2 in zip(batch.rewards, dones, Qs_s2)]
+        yᵢ = np.array(yᵢ).reshape((-1, 1))
 
-        self._critic.online_nn.train(
-            states_batch=np.array(batch.states_1),
-            actions_batch=np.array(batch.actions),
-            actual_q_vals=np.array(q_values).reshape((-1, 1)),
-        )
+        s = np.array(batch.states_1)
+        a = np.array(batch.actions)
+        self._critic.Q.train(s=s, a=a, y_i=yᵢ)
 
         self._log_max_q(batch=batch)
 
     @typechecked
     def _train_actor(self, batch: ExperienceTupleBatch) -> None:
         """Update the actor policy using the sampled gradient"""
-        states_1 = np.array(batch.states_1)
-        actions_batch = self._actor.online_nn.act(states_batch=states_1)
-        action_grads_batch = self._critic.online_nn.action_grads(
-            states_batch=states_1, actions_batch=actions_batch)
-        # TODO: Understand why the action_grads_batch is being unpacked below
-        self._actor.online_nn_train(states_batch=states_1,
-                                    action_grads_batch=action_grads_batch[0])
+        s = np.array(batch.states_1)
+        μ = self._actor.μ
+        grads_a = self._critic.Q.grads_a(s=s, a=μ(s))
+        # TODO: Understand why the grads_a is being unpacked below
+        μ.train(s=s, grads_a=grads_a[0])
 
     @typechecked
     def _log_max_q(self, batch: ExperienceTupleBatch):
-        states_1_q_vals = self._critic.online_nn.predict_q(
-            states_batch=batch.states_1, actions_batch=batch.actions)
-        self.episode_max_q = np.amax(states_1_q_vals)
+        s, a = batch.states_1, batch.actions
+        q_vals = self._critic.Q(s=s, a=a)
+        self.episode_max_q = np.amax(q_vals)
 
     @typechecked
     @overrides

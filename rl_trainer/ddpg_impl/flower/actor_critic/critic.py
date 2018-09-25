@@ -4,8 +4,7 @@ from overrides import overrides
 from typeguard import typechecked
 import numpy as np
 
-from rl_trainer.ddpg_impl.flower.actor_critic.nn_templates import TensorFlowNetwork, TargetNetwork, \
-    OnlineNetwork
+from .nn_templates import TensorFlowNetwork, TargetNetwork, OnlineNetwork
 
 
 class QNetwork(TensorFlowNetwork):
@@ -43,11 +42,15 @@ class QNetwork(TensorFlowNetwork):
         net = tflearn.activation(concat, activation='relu')
         return net
 
-    def predict_q(self, states_batch, actions_batch):
+    def __call__(self, s, a):
         return self._sess.run(self._q_value_output, feed_dict={
-            self._state_ph: states_batch,
-            self._action_ph: actions_batch,
+            self._state_ph: s,
+            self._action_ph: a,
         })
+
+
+class TargetQNetwork(QNetwork, TargetNetwork):
+    pass
 
 
 class OnlineQNetwork(QNetwork, OnlineNetwork):
@@ -69,29 +72,25 @@ class OnlineQNetwork(QNetwork, OnlineNetwork):
 
     @typechecked
     @overrides
-    def create_target_network(self, tau: float) -> TargetNetwork:
+    def create_target_network(self, tau: float) -> TargetQNetwork:
         state_dim = self._state_ph.get_shape().as_list()[1]
         action_dim = self._action_ph.get_shape().as_list()[1]
         return TargetQNetwork(online_nn_vars=self._variables, tau=tau,
                               sess=self._sess, state_dim=state_dim,
                               action_dim=action_dim)
 
-    def train(self, states_batch, actions_batch, actual_q_vals):
+    def train(self, s, a, y_i):
         self._sess.run(self._train_op, feed_dict={
-            self._state_ph: states_batch,
-            self._action_ph: actions_batch,
-            self._q_value_ph: actual_q_vals,
+            self._state_ph: s,
+            self._action_ph: a,
+            self._q_value_ph: y_i,
         })
 
-    def action_grads(self, states_batch, actions_batch):
+    def grads_a(self, s, a):
         return self._sess.run(self._action_grads, feed_dict={
-            self._state_ph: states_batch,
-            self._action_ph: actions_batch,
+            self._state_ph: s,
+            self._action_ph: a,
         })
-
-
-class TargetQNetwork(QNetwork, TargetNetwork):
-    pass
 
 
 class Critic:
@@ -99,6 +98,6 @@ class Critic:
     def __init__(self, sess: tf.Session, state_dim: int, action_dim: int,
                  learning_rate: float = 0.001, tau: float = 0.001):
         self._sess = sess
-        self.online_nn = OnlineQNetwork(sess=sess, state_dim=state_dim,
-                                        action_dim=action_dim, learning_rate=learning_rate)
-        self.target_nn = self.online_nn.create_target_network(tau=tau)
+        self.Q = OnlineQNetwork(sess=sess, state_dim=state_dim,
+                                action_dim=action_dim, learning_rate=learning_rate)
+        self.Qʹ = self.Q.create_target_network(tau=tau)

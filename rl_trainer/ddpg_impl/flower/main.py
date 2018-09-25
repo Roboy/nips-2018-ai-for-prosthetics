@@ -6,7 +6,7 @@ from gym.envs.classic_control import PendulumEnv
 from osim.env import ProstheticsEnv
 from typeguard import typechecked
 
-from rl_trainer.ddpg_impl.flower.actor_critic import TFDDPGAgent
+from rl_trainer.ddpg_impl.flower.actor_critic import TensorFlowDDPGAgent
 from rl_trainer.experiment import Experiment
 
 
@@ -22,7 +22,7 @@ def main(max_episodes: int, max_episode_len, env: gym.Env):
     use_gym_monitor = False
     gym_monitor_dir = "./flower_results"
 
-    agent = TFDDPGAgent(
+    agent = TensorFlowDDPGAgent(
         state_dim=env.observation_space.shape[0],
         action_space=env.action_space,
     )

@@ -17,8 +17,8 @@ def test_main():
     try:
         main(
             max_episodes=2,
-            max_episode_len=5,
-            env=MockEnvironment()
+            max_episode_len=100,
+            env=MockEnvironment(episode_length=100)
         )
     finally:
         if os.path.exists(RESULTS_DIR):

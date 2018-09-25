@@ -4,9 +4,7 @@ from overrides import overrides
 from typeguard import typechecked
 import numpy as np
 
-from rl_trainer.ddpg_impl.flower.actor_critic.nn_templates import OnlineNetwork, \
-    TargetNetwork
-from .nn_templates import TensorFlowNetwork
+from .nn_templates import TensorFlowNetwork, OnlineNetwork, TargetNetwork
 
 
 class PolicyNetwork(TensorFlowNetwork):
@@ -36,9 +34,9 @@ class PolicyNetwork(TensorFlowNetwork):
         # Scale output to -action_bound to action_bound
         self._action_output = tf.multiply(action_output, self._action_bound)
 
-    def act(self, states_batch):
+    def __call__(self, s):
         return self._sess.run(self._action_output, feed_dict={
-            self._state_ph: states_batch
+            self._state_ph: s
         })
 
 
@@ -48,14 +46,43 @@ class TargetPolicyNetwork(PolicyNetwork, TargetNetwork):
 
 class OnlinePolicyNetwork(PolicyNetwork, OnlineNetwork):
 
+    def __init__(self, action_bound: np.ndarray, sess: tf.Session,
+                 state_dim: int, action_dim: int, learning_rate: float, batch_size: int):
+        super(OnlinePolicyNetwork, self).__init__(
+            action_bound=action_bound, sess=sess,
+            state_dim=state_dim, action_dim=action_dim)
+
+        self._train_op = self._setup_train_op(
+            action_dim=action_dim, batch_size=batch_size, learning_rate=learning_rate)
+
     @typechecked
     @overrides
-    def create_target_network(self, tau: float) -> TargetNetwork:
+    def create_target_network(self, tau: float) -> TargetPolicyNetwork:
         state_dim = self._state_ph.get_shape().as_list()[1]
         action_dim = self._action_output.get_shape().as_list()[1]
         return TargetPolicyNetwork(
             action_bound=self._action_bound, sess=self._sess, state_dim=state_dim,
             action_dim=action_dim, online_nn_vars=self._variables, tau=tau)
+
+    def train(self, s, grads_a):
+        self._sess.run(self._train_op, feed_dict={
+            self._state_ph: s,
+            self._critic_provided_action_grads: grads_a
+        })
+
+    @typechecked
+    def _setup_train_op(self, action_dim: int, batch_size: int, learning_rate: float):
+        self._critic_provided_action_grads = \
+            tf.placeholder(dtype=tf.float32, shape=[None, action_dim])
+        unnormalized_actor_grads = tf.gradients(
+            ys=self._action_output,
+            xs=self._variables,
+            grad_ys=-self._critic_provided_action_grads,
+        )
+        actor_gradients = [tf.div(g, batch_size) for g in unnormalized_actor_grads]
+        adam = tf.train.AdamOptimizer(learning_rate)
+        return adam.apply_gradients(
+            grads_and_vars=zip(actor_gradients, self._variables))
 
 
 class Actor:
@@ -73,28 +100,26 @@ class Actor:
                  learning_rate: float = 1e-4, tau: float = 0.001):
         self._sess = sess
 
-        self.online_nn = OnlinePolicyNetwork(sess=sess, state_dim=state_dim,
-                action_dim=action_dim, action_bound=action_bound)
+        self.μ = OnlinePolicyNetwork(sess=sess, state_dim=state_dim, action_dim=action_dim,
+                                     action_bound=action_bound, learning_rate=learning_rate,
+                                     batch_size=batch_size)
         self._critic_provided_action_grads = tf.placeholder(tf.float32, [None, action_dim])
         self._online_nn_train_op = self._setup_online_nn_train_op(
             learning_rate, batch_size, self._critic_provided_action_grads)
 
-        self.target_nn = self.online_nn.create_target_network(tau=tau)
+        self.μʹ = self.μ.create_target_network(tau=tau)
 
     @typechecked
     def _setup_online_nn_train_op(self, learning_rate: float, batch_size: int, critic_provided_action_grads):
         unnormalized_actor_grads = tf.gradients(
-            ys=self.online_nn._action_output,
-            xs=self.online_nn._variables,
+            ys=self.μ._action_output,
+            xs=self.μ._variables,
             grad_ys=-critic_provided_action_grads
         )
         actor_gradients = [tf.div(g, batch_size) for g in unnormalized_actor_grads]
         adam = tf.train.AdamOptimizer(learning_rate)
         return adam.apply_gradients(
-            grads_and_vars=zip(actor_gradients, self.online_nn._variables))
+            grads_and_vars=zip(actor_gradients, self.μ._variables))
 
-    def online_nn_train(self, states_batch, action_grads_batch):
-        self._sess.run(self._online_nn_train_op, feed_dict={
-            self.online_nn._state_ph: states_batch,
-            self._critic_provided_action_grads: action_grads_batch
-        })
+    def online_nn_train2(self, s, grads_a):
+        self.μ.train(s=s, grads_a=grads_a)

@@ -9,6 +9,4 @@ and developed with tflearn + Tensorflow
 
 Author: Patrick Emami
 """
-from .actor import Actor
-from .critic import Critic
-from .tf_ddpg_agent import TFDDPGAgent
+from .tf_ddpg_agent import TensorFlowDDPGAgent
