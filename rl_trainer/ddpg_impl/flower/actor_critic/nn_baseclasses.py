@@ -26,8 +26,8 @@ class TargetNetwork(TensorFlowNetwork):
 
     def _setup_target_nn_update_ops(self, tau, online_vars: Collection[tf.Variable]):
         update_ops = []
-        for running_var, target_var in zip(online_vars, self._variables):
-            new_target_var = (1-tau)*target_var + tau*running_var
+        for online_var, target_var in zip(online_vars, self._variables):
+            new_target_var = (1-tau)*target_var + tau*online_var
             update_ops.append(target_var.assign(new_target_var))
         return update_ops
 
