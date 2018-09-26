@@ -56,7 +56,8 @@ class TensorFlowDDPGAgent(GymAgent):
         if self._replay_buffer.has_sufficient_samples():
             self._train()
         tflearn.is_training(False, session=self._sess)
-        action = self._μ(s=np.array([current_state]))
+        s = np.array([current_state])  # pack single state into tf action batch
+        action = self._μ(s=s)
         return action[0] + self._actor_noise()  # unpack tf batch shape
 
     def _train(self):
@@ -69,12 +70,11 @@ class TensorFlowDDPGAgent(GymAgent):
     @typechecked
     def _train_critic(self, batch: ExperienceTupleBatch) -> None:
         μʹ = self._μʹ
-        Qʹ = self._Qʹ
         γ = self._gamma
         s2 = np.array(batch.states_2)
         dones = batch.states_2_are_terminal
 
-        Qs_s2 = Qʹ(s=s2, a=μʹ(s=s2))
+        Qs_s2 = self._Qʹ(s=s2, a=μʹ(s=s2))
         yᵢ = [(r + (1-done)*γ*Q_s2) for r, done, Q_s2 in zip(batch.rewards, dones, Qs_s2)]
         yᵢ = np.array(yᵢ).reshape((-1, 1))
 
