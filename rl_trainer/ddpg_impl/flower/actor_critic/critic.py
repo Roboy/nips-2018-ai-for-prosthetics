@@ -1,8 +1,6 @@
 import tensorflow as tf
-import tflearn
 from overrides import overrides
 from typeguard import typechecked
-import numpy as np
 
 from .nn_baseclasses import TensorFlowNetwork, TargetNetwork, OnlineNetwork
 
@@ -16,31 +14,29 @@ class CriticNetwork(TensorFlowNetwork):
     @typechecked
     @overrides
     def _construct_nn(self, state_dim: int, action_dim: int) -> None:
-        self._state_ph = tflearn.input_data(shape=[None, state_dim])
-        self._action_ph = tflearn.input_data(shape=[None, action_dim])
+        self._state_ph = tf.placeholder(tf.float32, shape=[None, state_dim])
+        self._action_ph = tf.placeholder(tf.float32, shape=[None, action_dim])
         net = self._fc_layer_on_state_input()
         net = self._concat_action_input_to_net(net)
-        self._q_value_output = tflearn.fully_connected(
-            net, 1, bias_init="truncated_normal")
+        self._q_value_output = tf.layers.dense(
+            inputs=net, units=1, bias_initializer=tf.truncated_normal_initializer)
 
     def _fc_layer_on_state_input(self):
         net = self._default_fc_layer(self._state_ph)
-        net = tflearn.layers.normalization.batch_normalization(
-            net, beta=np.random.uniform(0, 0.0001))
-        net = tflearn.activations.relu(net)
+        net = tf.layers.batch_normalization(inputs=net, training=True)
+        net = tf.nn.relu(net)
         return net
 
     @typechecked
     def _default_fc_layer(self, x: tf.Tensor) -> tf.Tensor:
-        return tflearn.fully_connected(incoming=x, n_units=64,
-                                       bias_init="truncated_normal")
+        return tf.layers.dense(inputs=x, units=64,
+                               bias_initializer=tf.truncated_normal_initializer)
 
     def _concat_action_input_to_net(self, net):
         t1 = self._default_fc_layer(net)
         t2 = self._default_fc_layer(self._action_ph)
-        concat = tf.matmul(net, t1.W) + tf.matmul(self._action_ph, t2.W) + t2.b
-        net = tflearn.activation(concat, activation='relu')
-        return net
+        concat = tf.concat((t1, t2), axis=1)
+        return tf.nn.relu(concat)
 
     def __call__(self, s, a):
         return self._sess.run(self._q_value_output, feed_dict={
@@ -68,8 +64,13 @@ class OnlineCriticNetwork(CriticNetwork, OnlineNetwork):
         # actions except for one.
         self._action_grads = tf.gradients(ys=self._q_value_output, xs=self._action_ph)
         self._q_value_ph = tf.placeholder(tf.float32, [None, 1])
-        loss = tflearn.mean_square(self._q_value_ph, self._q_value_output)
-        self._train_op = tf.train.AdamOptimizer(learning_rate).minimize(loss)
+        loss = tf.losses.mean_squared_error(self._q_value_ph, self._q_value_output)
+        with self._include_batchnorm():
+            self._train_op = tf.train.AdamOptimizer(learning_rate).minimize(loss)
+
+    @staticmethod
+    def _include_batchnorm():
+        return tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS))
 
     @typechecked
     @overrides

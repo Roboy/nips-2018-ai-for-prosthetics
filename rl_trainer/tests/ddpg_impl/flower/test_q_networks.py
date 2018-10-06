@@ -42,6 +42,8 @@ def test_target_nn_update_op(target_q_nn: TargetCriticNetwork, tf_session: tf.Se
     vars_after_update = [var.eval(tf_session) for var in target_q_nn._variables]
 
     for before, after in zip(vars_before_update, vars_after_update):
+        if np.all(before == after) and (np.all(before == 0) or np.all(before == 1)):
+            continue
         assert not np.array_equal(before, after)
 
 
