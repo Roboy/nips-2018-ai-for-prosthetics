@@ -14,12 +14,13 @@ class CriticNetwork(TensorFlowNetwork):
     @typechecked
     @overrides
     def _construct_nn(self, state_dim: int, action_dim: int) -> None:
-        self._state_ph = tf.placeholder(tf.float32, shape=[None, state_dim])
-        self._action_ph = tf.placeholder(tf.float32, shape=[None, action_dim])
-        net = self._fc_layer_on_state_input()
-        net = self._concat_action_input_to_net(net)
-        self._q_value_output = tf.layers.dense(
-            inputs=net, units=1, bias_initializer=tf.truncated_normal_initializer)
+        with self._sess.graph.as_default():
+            self._state_ph = tf.placeholder(tf.float32, shape=[None, state_dim])
+            self._action_ph = tf.placeholder(tf.float32, shape=[None, action_dim])
+            net = self._fc_layer_on_state_input()
+            net = self._concat_action_input_to_net(net)
+            self._q_value_output = tf.layers.dense(
+                inputs=net, units=1, bias_initializer=tf.truncated_normal_initializer)
 
     def _fc_layer_on_state_input(self):
         net = tf.layers.dense(inputs=self._state_ph, units=64,
@@ -60,16 +61,17 @@ class OnlineCriticNetwork(CriticNetwork, OnlineNetwork):
             super(OnlineCriticNetwork, self).__init__(
                 sess=sess, state_dim=state_dim, action_dim=action_dim)
 
-        # Get the gradient of the net w.r.t. the action.
-        # For each action in the minibatch (i.e., for each x in xs),
-        # this will sum up the gradients of each critic output in the minibatch
-        # w.r.t. that action. Each output is independent of all
-        # actions except for one.
-        self._action_grads = tf.gradients(ys=self._q_value_output, xs=self._action_ph)
-        self._q_value_ph = tf.placeholder(tf.float32, [None, 1])
-        loss = tf.losses.mean_squared_error(self._q_value_ph, self._q_value_output)
-        with self._include_batchnorm():
-            self._train_op = tf.train.AdamOptimizer(learning_rate).minimize(loss)
+        with self._sess.graph.as_default():
+            # Get the gradient of the net w.r.t. the action.
+            # For each action in the minibatch (i.e., for each x in xs),
+            # this will sum up the gradients of each critic output in the minibatch
+            # w.r.t. that action. Each output is independent of all
+            # actions except for one.
+            self._action_grads = tf.gradients(ys=self._q_value_output, xs=self._action_ph)
+            self._q_value_ph = tf.placeholder(tf.float32, [None, 1])
+            loss = tf.losses.mean_squared_error(self._q_value_ph, self._q_value_output)
+            with self._include_batchnorm():
+                self._train_op = tf.train.AdamOptimizer(learning_rate).minimize(loss)
 
     @staticmethod
     def _include_batchnorm():

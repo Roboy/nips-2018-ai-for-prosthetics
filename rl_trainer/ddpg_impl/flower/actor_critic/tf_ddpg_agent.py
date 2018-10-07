@@ -36,7 +36,7 @@ class TensorFlowDDPGAgent(GymAgent):
 
         self._μ = actor_nn if actor_nn else OnlineActorNetwork(
             action_bound=action_space.high, sess=self._sess,
-            state_dim=state_dim, action_dim=action_dim)
+            state_dim=state_dim, action_dim=action_dim, action_space=action_space)
         self._μʹ = self._μ.create_target_network(tau=tau)
 
         self._sess.run(tf.global_variables_initializer())

@@ -13,7 +13,7 @@ TAU = 0.1
 
 @pytest.fixture(scope="module")
 def tf_session():
-    with tf.Session() as sess:
+    with tf.Session(graph=tf.Graph()) as sess:
         return sess
 
 
@@ -32,13 +32,14 @@ def target_q_nn(online_q_nn: OnlineCriticNetwork):
 
 
 def test_construction_of_target_nns():
-    with tf.Session() as sess:
+    with tf.Session(graph=tf.Graph()) as sess:
         net1 = TargetCriticNetwork(sess=sess, state_dim=4, action_dim=4, online_nn_vars=[], tau=TAU)
         assert isinstance(net1, TargetNetwork)
 
 
 def test_target_nn_update_op(target_q_nn: TargetCriticNetwork, tf_session: tf.Session):
-    tf_session.run(tf.global_variables_initializer())
+    with tf_session.graph.as_default():
+        tf_session.run(tf.global_variables_initializer())
     vars_before_update = [var.eval(tf_session) for var in target_q_nn._variables]
     target_q_nn.update()
     vars_after_update = [var.eval(tf_session) for var in target_q_nn._variables]
@@ -52,7 +53,8 @@ def test_target_nn_update_op(target_q_nn: TargetCriticNetwork, tf_session: tf.Se
 def test_target_nn_update_op_doesnt_change_online_nn(tf_session: tf.Session,
                                                      online_q_nn: OnlineCriticNetwork,
                                                      target_q_nn: TargetCriticNetwork):
-    tf_session.run(tf.global_variables_initializer())
+    with tf_session.graph.as_default():
+        tf_session.run(tf.global_variables_initializer())
     online_vars_before_update = [var.eval(tf_session) for var in online_q_nn._variables]
     target_q_nn.update()
     online_vars_after_update = [var.eval(tf_session) for var in online_q_nn._variables]
@@ -72,10 +74,3 @@ def test_q_network_has_prefixed_var_names(online_q_nn: OnlineCriticNetwork,
     for var in target_q_nn._variables:
         assert var.name.startswith(expected_prefix), \
             f"'{var.name}' var name doesnt start with '{expected_prefix}'"
-
-
-if __name__ == '__main__':
-    sess = tf_session()
-    nn = online_q_nn(sess)
-    tar_nn = target_q_nn(nn)
-    test_q_network_has_prefixed_var_names(nn, tar_nn)

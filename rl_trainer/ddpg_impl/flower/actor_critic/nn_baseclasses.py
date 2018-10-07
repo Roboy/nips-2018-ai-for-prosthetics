@@ -21,8 +21,9 @@ class TensorFlowNetwork:
 class TargetNetwork(TensorFlowNetwork):
     def __init__(self, online_nn_vars: Collection[tf.Variable], tau: float, **kwargs):
         super(TargetNetwork, self).__init__(**kwargs)
-        self._target_nn_update_ops = self._setup_target_nn_update_ops(
-            online_vars=online_nn_vars, tau=tau)
+        with self._sess.graph.as_default():
+            self._target_nn_update_ops = self._setup_target_nn_update_ops(
+                online_vars=online_nn_vars, tau=tau)
 
     def _setup_target_nn_update_ops(self, tau, online_vars: Collection[tf.Variable]):
         update_ops = []
