@@ -8,6 +8,8 @@ import numpy as np
 from rl_trainer.ddpg_impl.flower.actor_critic.nn_baseclasses import TargetNetwork, \
     OnlineNetwork
 
+TAU = 0.1
+
 
 @pytest.fixture(scope="module")
 def tf_session():
@@ -24,14 +26,14 @@ def online_q_nn(tf_session: tf.Session):
 
 @pytest.fixture(scope="module")
 def target_q_nn(online_q_nn: OnlineCriticNetwork):
-        target_net = online_q_nn.create_target_network(tau=0.5)
+        target_net = online_q_nn.create_target_network(tau=TAU)
         assert isinstance(target_net, TargetNetwork)
         return target_net
 
 
 def test_construction_of_target_nns():
     with tf.Session() as sess:
-        net1 = TargetCriticNetwork(sess=sess, state_dim=4, action_dim=4, online_nn_vars=[], tau=0.1)
+        net1 = TargetCriticNetwork(sess=sess, state_dim=4, action_dim=4, online_nn_vars=[], tau=TAU)
         assert isinstance(net1, TargetNetwork)
 
 
