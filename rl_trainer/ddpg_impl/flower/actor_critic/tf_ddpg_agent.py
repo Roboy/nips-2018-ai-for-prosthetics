@@ -1,9 +1,10 @@
 import gym
 import numpy as np
-from typing import Callable, Collection
+from typing import Callable, Collection, Dict
 
 import tensorflow as tf
 import tflearn
+from gym.spaces import Box
 from overrides import overrides
 from typeguard import typechecked
 
@@ -24,7 +25,6 @@ class TensorFlowDDPGAgent(GymAgent):
                  critic_nn: OnlineCriticNetwork = None, actor_nn: OnlineActorNetwork = None,
                  tf_model_saver: TFModelSaver = None):
 
-        self._model_saver = tf_model_saver if tf_model_saver else TFModelSaver()
         action_dim = action_space.shape[0]
         self._gamma = gamma
 
@@ -39,7 +39,9 @@ class TensorFlowDDPGAgent(GymAgent):
             state_dim=state_dim, action_dim=action_dim, action_space=action_space)
         self._μʹ = self._μ.create_target_network(tau=tau)
 
-        self._sess.run(tf.global_variables_initializer())
+        with self._sess.graph.as_default():
+            self._model_saver = tf_model_saver if tf_model_saver else TFModelSaver()
+            self._sess.run(tf.global_variables_initializer())
 
         self._actor_noise = actor_noise if actor_noise else OrnsteinUhlenbeckActionNoise(
             mu=np.zeros(action_dim))

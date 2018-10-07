@@ -1,0 +1,7 @@
+* Remove tflearn from actor
+* Remove tflearn from tf_ddpg_agent
+* Make sure tf_ddpg_agent graphs is correct
+* Save to .ckpt files
+* Implement agent.load_from()
+* Test that expected and loaded agents are the same
+* Test that two consecutive loaded agents are the same
