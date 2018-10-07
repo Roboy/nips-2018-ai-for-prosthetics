@@ -6,10 +6,12 @@ import tensorflow as tf
 
 class TFModelSaver:
 
+    DEFAULT_MODEL_DIR = "./tf_model_res/"
+
     @typechecked
-    def __init__(self, saving_frequency: int = 1, tf_model_dir: str = "./tf_model_res/"):
+    def __init__(self, saving_frequency: int = 1, tf_model_dir: str = None):
         self._saving_frequency = saving_frequency
-        self._tf_model_dir = tf_model_dir
+        self._tf_model_dir = tf_model_dir if tf_model_dir else self.DEFAULT_MODEL_DIR
         self._saver = tf.train.Saver()
         self._step_counter = 0
 

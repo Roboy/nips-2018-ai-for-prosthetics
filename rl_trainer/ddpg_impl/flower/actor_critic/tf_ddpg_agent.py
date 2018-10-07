@@ -108,6 +108,7 @@ class TensorFlowDDPGAgent(GymAgent):
         self._replay_buffer.extend(episode.experience_tuples)
         self._model_saver.step(self._sess)
 
+    @typechecked
     @overrides
     def set_seed(self, seed: int):
         tf.set_random_seed(seed)
