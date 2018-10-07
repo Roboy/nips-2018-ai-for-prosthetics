@@ -17,7 +17,7 @@ def tf_session():
 
 @pytest.fixture(scope="module")
 def online_q_nn(tf_session: tf.Session):
-    net = OnlineCriticNetwork(sess=tf_session, state_dim=2, action_dim=3, learning_rate=0.001)
+    net = OnlineCriticNetwork(sess=tf_session, state_dim=2, action_dim=3)
     assert isinstance(net, OnlineNetwork)
     return net
 
@@ -57,3 +57,23 @@ def test_target_nn_update_op_doesnt_change_online_nn(tf_session: tf.Session,
 
     for before, after in zip(online_vars_before_update, online_vars_after_update):
         assert np.array_equal(before, after)
+
+
+def test_q_network_has_prefixed_var_names(online_q_nn: OnlineCriticNetwork,
+                                       target_q_nn: TargetCriticNetwork):
+    expected_prefix = online_q_nn.__class__.__name__
+    for var in online_q_nn._variables:
+        assert var.name.startswith(expected_prefix), \
+            f"'{var.name}' var name doesnt start with '{expected_prefix}'"
+
+    expected_prefix = target_q_nn.__class__.__name__
+    for var in target_q_nn._variables:
+        assert var.name.startswith(expected_prefix), \
+            f"'{var.name}' var name doesnt start with '{expected_prefix}'"
+
+
+if __name__ == '__main__':
+    sess = tf_session()
+    nn = online_q_nn(sess)
+    tar_nn = target_q_nn(nn)
+    test_q_network_has_prefixed_var_names(nn, tar_nn)

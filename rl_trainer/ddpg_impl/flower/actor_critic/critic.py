@@ -22,19 +22,17 @@ class CriticNetwork(TensorFlowNetwork):
             inputs=net, units=1, bias_initializer=tf.truncated_normal_initializer)
 
     def _fc_layer_on_state_input(self):
-        net = self._default_fc_layer(self._state_ph)
+        net = tf.layers.dense(inputs=self._state_ph, units=64,
+                              bias_initializer=tf.truncated_normal_initializer)
         net = tf.layers.batch_normalization(inputs=net, training=True)
         net = tf.nn.relu(net)
         return net
 
-    @typechecked
-    def _default_fc_layer(self, x: tf.Tensor) -> tf.Tensor:
-        return tf.layers.dense(inputs=x, units=64,
-                               bias_initializer=tf.truncated_normal_initializer)
-
     def _concat_action_input_to_net(self, net):
-        t1 = self._default_fc_layer(net)
-        t2 = self._default_fc_layer(self._action_ph)
+        t1 = tf.layers.dense(inputs=net, units=64,
+                             bias_initializer=tf.truncated_normal_initializer)
+        t2 = tf.layers.dense(inputs=self._action_ph, units=64,
+                             bias_initializer=tf.truncated_normal_initializer)
         concat = tf.concat((t1, t2), axis=1)
         return tf.nn.relu(concat)
 
@@ -46,7 +44,10 @@ class CriticNetwork(TensorFlowNetwork):
 
 
 class TargetCriticNetwork(CriticNetwork, TargetNetwork):
-    pass
+    def __init__(self, **kwargs):
+        with tf.variable_scope(name_or_scope=None,
+                               default_name=self.__class__.__name__):
+            super(TargetCriticNetwork, self).__init__(**kwargs)
 
 
 class OnlineCriticNetwork(CriticNetwork, OnlineNetwork):
@@ -54,8 +55,10 @@ class OnlineCriticNetwork(CriticNetwork, OnlineNetwork):
     @typechecked
     def __init__(self, sess: tf.Session, state_dim: int, action_dim: int,
                  learning_rate: float = 0.001):
-        super(OnlineCriticNetwork, self).__init__(
-            sess=sess, state_dim=state_dim, action_dim=action_dim)
+        with tf.variable_scope(name_or_scope=None,
+                               default_name=self.__class__.__name__):
+            super(OnlineCriticNetwork, self).__init__(
+                sess=sess, state_dim=state_dim, action_dim=action_dim)
 
         # Get the gradient of the net w.r.t. the action.
         # For each action in the minibatch (i.e., for each x in xs),
