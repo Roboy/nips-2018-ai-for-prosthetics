@@ -8,10 +8,12 @@ class TensorFlowNetwork:
     @typechecked
     def __init__(self, sess: tf.Session, state_dim: int, action_dim: int):
         self._sess = sess
-        existing_vars = tf.trainable_variables()
-        self._construct_nn(state_dim, action_dim)
-        self._variables: Collection[tf.Variable] = [
-            var for var in tf.trainable_variables() if var not in existing_vars]
+        with self._sess.graph.as_default(), tf.variable_scope(
+                name_or_scope=None, default_name=self.__class__.__name__):
+            existing_vars = tf.trainable_variables()
+            self._construct_nn(state_dim, action_dim)
+            self._variables: Collection[tf.Variable] = [
+                var for var in tf.trainable_variables() if var not in existing_vars]
 
     @typechecked
     def _construct_nn(self, state_dim: int, action_dim: int) -> None:

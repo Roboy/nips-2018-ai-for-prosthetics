@@ -45,10 +45,7 @@ class CriticNetwork(TensorFlowNetwork):
 
 
 class TargetCriticNetwork(CriticNetwork, TargetNetwork):
-    def __init__(self, **kwargs):
-        with tf.variable_scope(name_or_scope=None,
-                               default_name=self.__class__.__name__):
-            super(TargetCriticNetwork, self).__init__(**kwargs)
+    pass
 
 
 class OnlineCriticNetwork(CriticNetwork, OnlineNetwork):
@@ -56,10 +53,8 @@ class OnlineCriticNetwork(CriticNetwork, OnlineNetwork):
     @typechecked
     def __init__(self, sess: tf.Session, state_dim: int, action_dim: int,
                  learning_rate: float = 0.001):
-        with tf.variable_scope(name_or_scope=None,
-                               default_name=self.__class__.__name__):
-            super(OnlineCriticNetwork, self).__init__(
-                sess=sess, state_dim=state_dim, action_dim=action_dim)
+        super(OnlineCriticNetwork, self).__init__(
+            sess=sess, state_dim=state_dim, action_dim=action_dim)
 
         with self._sess.graph.as_default():
             # Get the gradient of the net w.r.t. the action.
