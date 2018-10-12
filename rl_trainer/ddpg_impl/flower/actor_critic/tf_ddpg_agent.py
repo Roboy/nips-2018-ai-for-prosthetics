@@ -1,6 +1,5 @@
-import gym
 import numpy as np
-from typing import Callable, Collection, Dict
+from typing import Callable, Collection
 
 import tensorflow as tf
 import tflearn
@@ -13,16 +12,16 @@ from rl_trainer.agent.replay_buffer import ReplayBuffer, InMemoryReplayBuffer
 from rl_trainer.commons import Episode, ExperienceTupleBatch
 from rl_trainer.ddpg_impl.flower.actor_critic.tf_model_saver import TFModelSaver
 from .action_noise import OrnsteinUhlenbeckActionNoise
-from .critic import OnlineCriticNetwork
-from .actor import OnlineActorNetwork
+from .q_network import OnlineQNetwork
+from .policy_network import OnlinePolicyNetwork
 
 
 class TensorFlowDDPGAgent(GymAgent):
 
-    def __init__(self, state_dim: int, action_space: gym.spaces.Box, sess: tf.Session = None,
+    def __init__(self, state_dim: int, action_space: Box, sess: tf.Session = None,
                  gamma: float = 0.99, replay_buffer: ReplayBuffer = None,
                  actor_noise: Callable = None, tau: float = 0.001,
-                 critic_nn: OnlineCriticNetwork = None, actor_nn: OnlineActorNetwork = None,
+                 critic_nn: OnlineQNetwork = None, actor_nn: OnlinePolicyNetwork = None,
                  tf_model_saver: TFModelSaver = None):
 
         action_dim = action_space.shape[0]
@@ -30,11 +29,11 @@ class TensorFlowDDPGAgent(GymAgent):
 
         self._sess = sess if sess else tf.Session()
 
-        self._Q = critic_nn if critic_nn else OnlineCriticNetwork(
+        self._Q = critic_nn if critic_nn else OnlineQNetwork(
             sess=self._sess, state_dim=state_dim, action_dim=action_dim)
         self._Qʹ = self._Q.create_target_network(tau=tau)
 
-        self._μ = actor_nn if actor_nn else OnlineActorNetwork(
+        self._μ = actor_nn if actor_nn else OnlinePolicyNetwork(
             action_bound=action_space.high, sess=self._sess,
             state_dim=state_dim, action_dim=action_dim, action_space=action_space)
         self._μʹ = self._μ.create_target_network(tau=tau)

@@ -5,7 +5,7 @@ from typeguard import typechecked
 from .nn_baseclasses import TensorFlowNetwork, TargetNetwork, OnlineNetwork
 
 
-class CriticNetwork(TensorFlowNetwork):
+class QNetwork(TensorFlowNetwork):
     """
     Input to the network is the state and action, output is Q(s,a).
     The action must be obtained from the output of the Actor network.
@@ -17,12 +17,12 @@ class CriticNetwork(TensorFlowNetwork):
         with self._sess.graph.as_default():
             self._state_ph = tf.placeholder(tf.float32, shape=[None, state_dim])
             self._action_ph = tf.placeholder(tf.float32, shape=[None, action_dim])
-            net = self._fc_layer_on_state_input()
+            net = self._dense_layer_on_state_input()
             net = self._concat_action_input_to_net(net)
             self._q_value_output = tf.layers.dense(
                 inputs=net, units=1, bias_initializer=tf.truncated_normal_initializer)
 
-    def _fc_layer_on_state_input(self):
+    def _dense_layer_on_state_input(self):
         net = tf.layers.dense(inputs=self._state_ph, units=64,
                               bias_initializer=tf.truncated_normal_initializer)
         net = tf.layers.batch_normalization(inputs=net, training=True)
@@ -44,16 +44,16 @@ class CriticNetwork(TensorFlowNetwork):
         })
 
 
-class TargetCriticNetwork(CriticNetwork, TargetNetwork):
+class TargetQNetwork(QNetwork, TargetNetwork):
     pass
 
 
-class OnlineCriticNetwork(CriticNetwork, OnlineNetwork):
+class OnlineQNetwork(QNetwork, OnlineNetwork):
 
     @typechecked
     def __init__(self, sess: tf.Session, state_dim: int, action_dim: int,
                  learning_rate: float = 0.001):
-        super(OnlineCriticNetwork, self).__init__(
+        super(OnlineQNetwork, self).__init__(
             sess=sess, state_dim=state_dim, action_dim=action_dim)
 
         with self._sess.graph.as_default():
@@ -74,12 +74,12 @@ class OnlineCriticNetwork(CriticNetwork, OnlineNetwork):
 
     @typechecked
     @overrides
-    def create_target_network(self, tau: float) -> TargetCriticNetwork:
+    def create_target_network(self, tau: float) -> TargetQNetwork:
         state_dim = self._state_ph.get_shape().as_list()[1]
         action_dim = self._action_ph.get_shape().as_list()[1]
-        return TargetCriticNetwork(online_nn_vars=self._variables, tau=tau,
-                                   sess=self._sess, state_dim=state_dim,
-                                   action_dim=action_dim)
+        return TargetQNetwork(online_nn_vars=self._variables, tau=tau,
+                              sess=self._sess, state_dim=state_dim,
+                              action_dim=action_dim)
 
     def train(self, s, a, y_i):
         self._sess.run(self._train_op, feed_dict={

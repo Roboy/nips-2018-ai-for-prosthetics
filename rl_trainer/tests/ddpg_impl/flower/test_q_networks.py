@@ -1,7 +1,7 @@
 import pytest
 
-from rl_trainer.ddpg_impl.flower.actor_critic.critic import OnlineCriticNetwork, \
-    TargetCriticNetwork
+from rl_trainer.ddpg_impl.flower.actor_critic.q_network import OnlineQNetwork, \
+    TargetQNetwork
 import tensorflow as tf
 import numpy as np
 
@@ -19,13 +19,13 @@ def tf_session():
 
 @pytest.fixture(scope="module")
 def online_q_nn(tf_session: tf.Session):
-    net = OnlineCriticNetwork(sess=tf_session, state_dim=2, action_dim=3)
+    net = OnlineQNetwork(sess=tf_session, state_dim=2, action_dim=3)
     assert isinstance(net, OnlineNetwork)
     return net
 
 
 @pytest.fixture(scope="module")
-def target_q_nn(online_q_nn: OnlineCriticNetwork):
+def target_q_nn(online_q_nn: OnlineQNetwork):
         target_net = online_q_nn.create_target_network(tau=TAU)
         assert isinstance(target_net, TargetNetwork)
         return target_net
@@ -33,11 +33,11 @@ def target_q_nn(online_q_nn: OnlineCriticNetwork):
 
 def test_construction_of_target_nns():
     with tf.Session(graph=tf.Graph()) as sess:
-        net1 = TargetCriticNetwork(sess=sess, state_dim=4, action_dim=4, online_nn_vars=[], tau=TAU)
+        net1 = TargetQNetwork(sess=sess, state_dim=4, action_dim=4, online_nn_vars=[], tau=TAU)
         assert isinstance(net1, TargetNetwork)
 
 
-def test_target_nn_update_op(target_q_nn: TargetCriticNetwork, tf_session: tf.Session):
+def test_target_nn_update_op(target_q_nn: TargetQNetwork, tf_session: tf.Session):
     with tf_session.graph.as_default():
         tf_session.run(tf.global_variables_initializer())
     vars_before_update = [var.eval(tf_session) for var in target_q_nn._variables]
@@ -51,8 +51,8 @@ def test_target_nn_update_op(target_q_nn: TargetCriticNetwork, tf_session: tf.Se
 
 
 def test_target_nn_update_op_doesnt_change_online_nn(tf_session: tf.Session,
-                                                     online_q_nn: OnlineCriticNetwork,
-                                                     target_q_nn: TargetCriticNetwork):
+                                                     online_q_nn: OnlineQNetwork,
+                                                     target_q_nn: TargetQNetwork):
     with tf_session.graph.as_default():
         tf_session.run(tf.global_variables_initializer())
     online_vars_before_update = [var.eval(tf_session) for var in online_q_nn._variables]
@@ -63,8 +63,8 @@ def test_target_nn_update_op_doesnt_change_online_nn(tf_session: tf.Session,
         assert np.array_equal(before, after)
 
 
-def test_q_network_has_prefixed_var_names(online_q_nn: OnlineCriticNetwork,
-                                       target_q_nn: TargetCriticNetwork):
+def test_q_network_has_prefixed_var_names(online_q_nn: OnlineQNetwork,
+                                          target_q_nn: TargetQNetwork):
     expected_prefix = online_q_nn.__class__.__name__
     for var in online_q_nn._variables:
         assert var.name.startswith(expected_prefix), \

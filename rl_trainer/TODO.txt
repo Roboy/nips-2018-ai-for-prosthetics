@@ -1,7 +1,9 @@
-* Remove tflearn from actor
+* Push tf.Session inside of TensorFlowNetwork. Optionally, it can be injected.
+You shouldnt have to create a session for testing!!!
 * Remove tflearn from tf_ddpg_agent
 * Make sure tf_ddpg_agent graphs is correct
 * Save to .ckpt files
 * Implement agent.load_from()
 * Test that expected and loaded agents are the same
 * Test that two consecutive loaded agents are the same
+* Make ExperienceTupleBatch return np arrays
