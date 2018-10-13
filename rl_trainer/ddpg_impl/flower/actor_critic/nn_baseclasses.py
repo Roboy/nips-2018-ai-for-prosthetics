@@ -19,6 +19,10 @@ class TensorFlowNetwork:
     def _construct_nn(self, state_dim: int, action_dim: int) -> None:
         raise NotImplementedError
 
+    @staticmethod
+    def _include_batchnorm():
+        return tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS))
+
 
 class TargetNetwork(TensorFlowNetwork):
     def __init__(self, online_nn_vars: Collection[tf.Variable], tau: float, **kwargs):

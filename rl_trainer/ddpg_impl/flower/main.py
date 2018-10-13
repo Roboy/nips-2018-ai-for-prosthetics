@@ -8,12 +8,11 @@ from gym.envs.classic_control import PendulumEnv
 from typeguard import typechecked
 
 from rl_trainer.ddpg_impl.flower.actor_critic import TensorFlowDDPGAgent
-from rl_trainer.ddpg_impl.flower.actor_critic.tf_model_saver import TFModelSaver
 from rl_trainer.experiment import Experiment
 
 
 @typechecked
-def main(max_episodes: int, max_episode_len, env: gym.Env, gym_dir: str, tf_model_dir: str):
+def main(max_episodes: int, max_episode_len, env: gym.Env, gym_dir: str):
 
     seed = 0
     np.random.seed(seed)
@@ -26,7 +25,6 @@ def main(max_episodes: int, max_episode_len, env: gym.Env, gym_dir: str, tf_mode
     agent = TensorFlowDDPGAgent(
         state_dim=env.observation_space.shape[0],
         action_space=env.action_space,
-        tf_model_saver=TFModelSaver(tf_model_dir=tf_model_dir),
     )
 
     if use_gym_monitor:
@@ -48,6 +46,5 @@ if __name__ == '__main__':
     env = PendulumEnv()
     res_dir = "./flower_results"
     gym_dir = os.path.join(res_dir, "gym/")
-    tf_dir = os.path.join(res_dir, "tensorflow/")
     main(max_episodes=10, max_episode_len=int(100),
-         env=env, gym_dir=gym_dir, tf_model_dir=tf_dir)
+         env=env, gym_dir=gym_dir)

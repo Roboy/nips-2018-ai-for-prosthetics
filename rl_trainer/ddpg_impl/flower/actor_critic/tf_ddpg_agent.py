@@ -2,7 +2,6 @@ import numpy as np
 from typing import Callable, Collection
 
 import tensorflow as tf
-import tflearn
 from gym.spaces import Box
 from overrides import overrides
 from typeguard import typechecked
@@ -59,13 +58,11 @@ class TensorFlowDDPGAgent(GymAgent):
     def act(self, current_state: Collection[float]):
         if self._replay_buffer.has_sufficient_samples():
             self._train()
-        tflearn.is_training(False, session=self._sess)
         s = np.array([current_state])  # pack single state into tf action batch
         action = self._μ(s=s)
         return action[0] + self._actor_noise()  # unpack tf batch shape
 
     def _train(self):
-        tflearn.is_training(True, session=self._sess)
         batch = self._replay_buffer.sample_batch()
         self._train_critic(batch)
         self._train_actor(batch)
@@ -94,8 +91,8 @@ class TensorFlowDDPGAgent(GymAgent):
         s = np.array(batch.states_1)
         μ = self._μ
         grads_a = self._Q.grads_a(s=s, a=μ(s))
-        # TODO: Understand why the grads_a is being unpacked below
-        μ.train(s=s, grads_a=grads_a[0])
+        assert len(grads_a) == 1
+        μ.train(s=s, grads_a=grads_a[0])  # unpack tf batch shape
 
     @typechecked
     def _log_max_q(self, batch: ExperienceTupleBatch):

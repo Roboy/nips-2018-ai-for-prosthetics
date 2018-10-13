@@ -10,6 +10,7 @@ ACTION_DIM = 3
 ACTION_SPACE = MockSpace(ACTION_DIM)
 STATE_DIM = 2
 STATE_SPACE = MockSpace(STATE_DIM)
+SOME_STATE = np.reshape(STATE_SPACE.sample(), (1, -1))
 
 
 @pytest.fixture(scope="module")
@@ -44,26 +45,60 @@ def test_constructor_rejects_inconsistent_action_dim_input():
 
 def test_online_policy_nn_is_callable(online_policy_nn: OnlinePolicyNetwork,
                                       tf_sess: tf.Session):
-    with tf_sess.graph.as_default():
-        tf_sess.run(tf.global_variables_initializer())
-    some_state = np.reshape(STATE_SPACE.sample(), (1, -1))
-    action = online_policy_nn(s=some_state)[0]  # unpack tf batch shape
+    _init_tf_vars(tf_sess)
+    action = online_policy_nn(s=SOME_STATE)[0]  # unpack tf batch shape
     for num in action:
         assert isinstance(num, np.float32), f"type of num: {type(num)}"
 
 
-def test_online_policy_nn_train(online_policy_nn: OnlinePolicyNetwork, tf_sess: tf.Session):
+def _init_tf_vars(tf_sess: tf.Session):
     with tf_sess.graph.as_default():
         tf_sess.run(tf.global_variables_initializer())
 
-    vars_before_train = [var.eval(tf_sess) for var in online_policy_nn._variables]
 
-    batch_size = online_policy_nn.DEFAULT_BATCH_SIZE
-    grads_a = np.array([ACTION_SPACE.sample() for _ in range(batch_size)])
-    states = np.array([STATE_SPACE.sample() for _ in range(batch_size)])
-    online_policy_nn.train(s=states, grads_a=grads_a)
+def test_online_policy_nn_train(online_policy_nn: OnlinePolicyNetwork, tf_sess: tf.Session):
+    _init_tf_vars(tf_sess)
+
+    vars_before_train = [var.eval(tf_sess) for var in online_policy_nn._variables]
+    _train_nn_with_one_batch(online_policy_nn)
     vars_after_train = [var.eval(tf_sess) for var in online_policy_nn._variables]
 
     for before, after, var in zip(vars_before_train, vars_after_train,
                                   online_policy_nn._variables):
         assert not np.allclose(before, after, 2e-8), f"var '{var.name}' is equal"
+
+
+def _train_nn_with_one_batch(online_policy_nn: OnlinePolicyNetwork):
+    batch_size = online_policy_nn.DEFAULT_BATCH_SIZE
+    grads_a = np.array([ACTION_SPACE.sample() for _ in range(batch_size)])
+    states = np.array([STATE_SPACE.sample() for _ in range(batch_size)])
+    online_policy_nn.train(s=states, grads_a=grads_a)
+
+
+def test_online_policy_nn_batchnorm_train_behavior(online_policy_nn: OnlinePolicyNetwork,
+                                                   tf_sess: tf.Session):
+    _init_tf_vars(tf_sess)
+    batchnorm_vars = [var for var in online_policy_nn._variables
+                      if "batch_normalization" in var.name]
+    assert len(batchnorm_vars) == 4
+    vars_before_train = [var.eval(tf_sess) for var in batchnorm_vars]
+    _train_nn_with_one_batch(online_policy_nn)
+    vars_after_train = [var.eval(tf_sess) for var in batchnorm_vars]
+
+    for before, after, var in zip(vars_before_train, vars_after_train, batchnorm_vars):
+        assert not np.allclose(before, after), f"var '{var.name}' is equal"
+
+
+def test_online_policy_nn_batchnorm_inference_behavior(online_policy_nn: OnlinePolicyNetwork,
+                                                       tf_sess: tf.Session):
+    _init_tf_vars(tf_sess)
+    batchnorm_vars = [var for var in online_policy_nn._variables
+                      if "batch_normalization" in var.name]
+    assert len(batchnorm_vars) == 4
+    vars_before_inference = [var.eval(tf_sess) for var in batchnorm_vars]
+    online_policy_nn(s=SOME_STATE)
+    vars_after_inference = [var.eval(tf_sess) for var in batchnorm_vars]
+
+    for before, after, var in zip(vars_before_inference,
+                                  vars_after_inference, batchnorm_vars):
+        assert np.allclose(before, after), f"var '{var.name}' is not equal"
