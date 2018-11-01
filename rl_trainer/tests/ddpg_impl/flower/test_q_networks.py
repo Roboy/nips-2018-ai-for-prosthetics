@@ -14,7 +14,7 @@ TAU = 0.1
 @pytest.fixture(scope="module")
 def tf_session():
     with tf.Session(graph=tf.Graph()) as sess:
-        return sess
+        yield sess
 
 
 @pytest.fixture(scope="module")

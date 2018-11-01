@@ -16,7 +16,7 @@ SOME_STATE = np.reshape(STATE_SPACE.sample(), (1, -1))
 @pytest.fixture(scope="module")
 def tf_sess():
     with tf.Session(graph=tf.Graph()) as sess:
-        return sess
+        yield sess
 
 
 @pytest.fixture(scope="module")

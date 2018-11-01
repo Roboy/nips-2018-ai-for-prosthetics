@@ -29,16 +29,12 @@ def test_tf_ddpg_agent_act(flower: TensorFlowDDPGAgent):
     assert ACTION_SPACE.contains(action)
 
 
-def test_tf_ddpg_agent_observe_episode(flower: TensorFlowDDPGAgent):
+def test_tf_ddpg_agent_observe_episode(flower: TensorFlowDDPGAgent, cleanup):
     """
     Observing an episode may trigger model saving, so we need to remove
     the created folder.
     """
-    try:
-        flower.observe_episode(EPISODE)
-    finally:
-        if os.path.exists(TFModelSaver.DEFAULT_MODEL_DIR):
-            shutil.rmtree(TFModelSaver.DEFAULT_MODEL_DIR)
+    flower.observe_episode(EPISODE)
 
 
 def test_tf_ddpg_agent_rejects_invalid_episodes(flower: TensorFlowDDPGAgent):
@@ -57,7 +53,7 @@ def test_tf_ddpg_agent_reject_invalid_seed(flower: TensorFlowDDPGAgent):
             flower.set_seed(invalid_seed)
 
 
-def test_tf_ddpg_agent_trigger_train():
+def test_tf_ddpg_agent_trigger_train(cleanup):
     replay_buffer = InMemoryReplayBuffer(lower_size_limit=2, batch_size=2)
     agent = TensorFlowDDPGAgent(state_dim=STATE_DIM, action_space=ACTION_SPACE,
                                 replay_buffer=replay_buffer)
@@ -65,3 +61,10 @@ def test_tf_ddpg_agent_trigger_train():
         agent.observe_episode(EPISODE)
         agent.act(current_state=STATE_SPACE.sample())
         train_spy.assert_called()
+
+
+@pytest.fixture(scope="module")
+def cleanup():
+    yield
+    if os.path.exists(TFModelSaver.DEFAULT_MODEL_DIR):
+        shutil.rmtree(TFModelSaver.DEFAULT_MODEL_DIR)
